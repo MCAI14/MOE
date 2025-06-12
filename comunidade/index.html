@@ -327,10 +327,25 @@
       });
     }
 
+    function limparMensagensPublicasAntigas() {
+      db.ref('mensagens').once('value', snapshot => {
+        const mensagens = snapshot.val() || {};
+        const agora = Date.now();
+        Object.entries(mensagens).forEach(([key, msg]) => {
+          if (
+            msg.tipo === 'publico' &&
+            msg.timestamp &&
+            agora - msg.timestamp > 24 * 60 * 60 * 1000
+          ) {
+            db.ref('mensagens/' + key).remove();
+          }
+        });
+      });
+    }
+
     document.getElementById('enviar').onclick = function() {
       const usuario = document.getElementById('usuario').value || 'Anônimo';
       const msg = document.getElementById('mensagem').value;
-      // Lista simples de palavras proibidas (adicione mais se quiser)
       const proibidas = ["foda-se", "filho da puta", "merda", "caralho", "puta"];
       const msgLower = msg.toLowerCase();
       if (msg.trim() === '') return;
@@ -339,7 +354,7 @@
         document.getElementById('mensagem').value = '';
         return;
       }
-      db.ref('mensagens').push({ usuario, msg, tipo, sala: codigoSalaPrivada });
+      db.ref('mensagens').push({ usuario, msg, tipo, sala: codigoSalaPrivada, timestamp: Date.now() });
       document.getElementById('mensagem').value = '';
     };
 
@@ -389,6 +404,9 @@
     // Chame ao carregar a página
     mostrarSalasHistorico();
     carregarMensagens();
+    document.addEventListener('DOMContentLoaded', function() {
+      limparMensagensPublicasAntigas();
+    });
   </script>
 </body>
 </html>
