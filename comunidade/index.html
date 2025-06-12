@@ -5,12 +5,139 @@
   <title>Comunidade - Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    #chat { border: 1px solid #ccc; padding: 20px; height: 300px; overflow-y: scroll; }
-    #mensagem { width: 80%; }
-    #enviar { padding: 8px 16px; }
-    .privado { color: #e67e22; }
-    .publico { color: #3498db; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6fb;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #2d3a4b;
+      margin-top: 40px;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .chat-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(44, 62, 80, 0.08);
+      padding: 32px 24px 16px 24px;
+      width: 100%;
+      max-width: 420px;
+      margin: 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .user-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .user-bar input {
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .user-bar input:focus {
+      border: 1.5px solid #3498db;
+    }
+    .chat-type-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .chat-type-bar button {
+      background: #e9eef6;
+      color: #2d3a4b;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-type-bar button:hover, .chat-type-bar button.active {
+      background: #3498db;
+      color: #fff;
+    }
+    #chat {
+      border-radius: 8px;
+      background: #f7fafc;
+      border: 1px solid #e1e4ea;
+      padding: 18px 12px;
+      height: 320px;
+      overflow-y: auto;
+      font-size: 15px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .msg {
+      padding: 8px 12px;
+      border-radius: 8px;
+      max-width: 80%;
+      word-break: break-word;
+      margin-bottom: 2px;
+      display: inline-block;
+      box-shadow: 0 1px 4px rgba(44,62,80,0.04);
+    }
+    .publico {
+      background: #eaf6ff;
+      color: #217dbb;
+      align-self: flex-start;
+    }
+    .privado {
+      background: #fff3e6;
+      color: #e67e22;
+      align-self: flex-end;
+    }
+    .input-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    #mensagem {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    #mensagem:focus {
+      border: 1.5px solid #3498db;
+    }
+    #enviar {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #enviar:hover {
+      background: #217dbb;
+    }
+    .sala-info {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+      text-align: center;
+    }
   </style>
   <!-- Adicione os scripts do Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -18,16 +145,22 @@
 </head>
 <body>
   <h1>Comunidade - Chat</h1>
-  <div>
-    <label>Usuário: <input type="text" id="usuario" /></label>
+  <div class="chat-container">
+    <div class="user-bar">
+      <label for="usuario"><strong>Usuário:</strong></label>
+      <input type="text" id="usuario" placeholder="Seu nome" />
+    </div>
+    <div class="chat-type-bar">
+      <button id="btn-publico" onclick="mudarTipo('publico')" class="active">Chat Público</button>
+      <button id="btn-privado" onclick="mudarTipo('privado')">Chat Privado</button>
+    </div>
+    <div class="sala-info" id="sala-info"></div>
+    <div id="chat"></div>
+    <div class="input-bar">
+      <input type="text" id="mensagem" placeholder="Digite sua mensagem..." autocomplete="off" />
+      <button id="enviar">Enviar</button>
+    </div>
   </div>
-  <div>
-    <button onclick="mudarTipo('publico')">Chat Público</button>
-    <button onclick="mudarTipo('privado')">Chat Privado</button>
-  </div>
-  <div id="chat"></div>
-  <input type="text" id="mensagem" placeholder="Digite sua mensagem..." />
-  <button id="enviar">Enviar</button>
 
   <script>
     // Configurações do seu Firebase
@@ -46,47 +179,101 @@
 
     let tipo = 'publico';
     let codigoSalaPrivada = null;
+    let ultimaChave = null;
 
+    // Botões de seleção de chat
     function mudarTipo(novoTipo) {
       tipo = novoTipo;
+      document.getElementById('btn-publico').classList.remove('active');
+      document.getElementById('btn-privado').classList.remove('active');
+      document.getElementById('sala-info').textContent = '';
       if (tipo === 'privado') {
+        document.getElementById('btn-privado').classList.add('active');
         // Pergunta se quer criar ou entrar numa sala privada
         const acao = prompt("Digite '1' para criar uma sala privada ou '2' para entrar numa sala existente:");
         if (acao === '1') {
           // Criar sala: gera código aleatório
           codigoSalaPrivada = Math.random().toString(36).substring(2, 8).toUpperCase();
           alert("Código da sua sala privada: " + codigoSalaPrivada + "\nGuarde este código para partilhar com outros.");
+          document.getElementById('sala-info').textContent = "Sala privada: " + codigoSalaPrivada;
         } else if (acao === '2') {
           // Entrar numa sala existente
           codigoSalaPrivada = prompt("Digite o código da sala privada:");
           if (!codigoSalaPrivada) {
             tipo = 'publico';
             codigoSalaPrivada = null;
+            document.getElementById('btn-publico').classList.add('active');
             alert("Código inválido. Voltando ao chat público.");
+          } else {
+            document.getElementById('sala-info').textContent = "Sala privada: " + codigoSalaPrivada;
           }
         } else {
           tipo = 'publico';
           codigoSalaPrivada = null;
+          document.getElementById('btn-publico').classList.add('active');
           alert("Opção inválida. Voltando ao chat público.");
         }
-        document.getElementById('chat').innerHTML += `<div><em>Alterado para chat privado${codigoSalaPrivada ? " (" + codigoSalaPrivada + ")" : ""}</em></div>`;
       } else {
         codigoSalaPrivada = null;
-        document.getElementById('chat').innerHTML += `<div><em>Alterado para chat público</em></div>`;
+        document.getElementById('btn-publico').classList.add('active');
+        document.getElementById('sala-info').textContent = "Chat público";
       }
       carregarMensagens();
+    }
+
+    // Notificações
+    document.addEventListener('DOMContentLoaded', function() {
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+      }
+      document.getElementById('sala-info').textContent = "Chat público";
+    });
+
+    function mostrarNotificacao(titulo, corpo) {
+      if (Notification.permission === "granted") {
+        new Notification(titulo, { body: corpo });
+      }
     }
 
     function carregarMensagens() {
       db.ref('mensagens').off();
       db.ref('mensagens').on('value', snapshot => {
-        const mensagens = snapshot.val() || [];
-        document.getElementById('chat').innerHTML = '';
-        Object.values(mensagens)
-          .filter(m => m.tipo === tipo)
-          .forEach(m => {
-            document.getElementById('chat').innerHTML += `<div class="${m.tipo}"><strong>${m.usuario}:</strong> ${m.msg}</div>`;
-          });
+        const mensagens = snapshot.val() || {};
+        const chatDiv = document.getElementById('chat');
+        chatDiv.innerHTML = '';
+        let chaves = Object.keys(mensagens);
+        chaves.filter(k => {
+          const m = mensagens[k];
+          if (tipo === 'publico') return m.tipo === 'publico';
+          if (tipo === 'privado') return m.tipo === 'privado' && m.sala === codigoSalaPrivada;
+          return false;
+        }).forEach(k => {
+          const m = mensagens[k];
+          chatDiv.innerHTML += `<div class="msg ${m.tipo}"><strong>${m.usuario}:</strong> ${m.msg}</div>`;
+        });
+
+        // Notificar se chegou mensagem nova da sala correta e de outro usuário
+        if (chaves.length > 0) {
+          const ultimaKey = chaves[chaves.length - 1];
+          const ultimaMsg = mensagens[ultimaKey];
+          const usuarioAtual = document.getElementById('usuario').value || 'Anônimo';
+          const mesmaSala =
+            (tipo === 'publico' && ultimaMsg.tipo === 'publico') ||
+            (tipo === 'privado' && ultimaMsg.tipo === 'privado' && ultimaMsg.sala === codigoSalaPrivada);
+
+          if (
+            ultimaChave !== ultimaKey &&
+            ultimaMsg.usuario !== usuarioAtual &&
+            mesmaSala
+          ) {
+            mostrarNotificacao(ultimaMsg.usuario, ultimaMsg.msg);
+          }
+          ultimaChave = ultimaKey;
+        }
+        // Scroll automático para a última mensagem
+        chatDiv.scrollTop = chatDiv.scrollHeight;
       });
     }
 
@@ -106,58 +293,14 @@
       document.getElementById('mensagem').value = '';
     };
 
-    carregarMensagens();
-  </script>
-  <script>
-  // Solicita permissão para notificações ao carregar a página
-  document.addEventListener('DOMContentLoaded', function() {
-    if ("Notification" in window) {
-      if (Notification.permission === "default") {
-        Notification.requestPermission();
-      }
-    }
-  });
-
-  function mostrarNotificacao(titulo, corpo) {
-    if (Notification.permission === "granted") {
-      new Notification(titulo, { body: corpo });
-    }
-  }
-
-  // Notificação ao receber nova mensagem (exceto as do próprio usuário)
-  let ultimaChave = null;
-  function carregarMensagens() {
-    db.ref('mensagens').off();
-    db.ref('mensagens').on('value', snapshot => {
-      const mensagens = snapshot.val() || {};
-      document.getElementById('chat').innerHTML = '';
-      let chaves = Object.keys(mensagens);
-      chaves.filter(k => {
-        const m = mensagens[k];
-        if (tipo === 'publico') return m.tipo === 'publico';
-        if (tipo === 'privado') return m.tipo === 'privado' && m.sala === codigoSalaPrivada;
-        return false;
-      }).forEach(k => {
-        const m = mensagens[k];
-        document.getElementById('chat').innerHTML += `<div class="${m.tipo}"><strong>${m.usuario}:</strong> ${m.msg}</div>`;
-      });
-
-      // Notificar se chegou mensagem nova de outro usuário
-      if (chaves.length > 0) {
-        const ultimaMsg = mensagens[chaves[chaves.length - 1]];
-        if (
-          ultimaChave !== chaves[chaves.length - 1] &&
-          ultimaMsg.usuario !== (document.getElementById('usuario').value || 'Anônimo')
-        ) {
-          mostrarNotificacao(ultimaMsg.usuario, ultimaMsg.msg);
-        }
-        ultimaChave = chaves[chaves.length - 1];
+    // Enviar mensagem ao pressionar Enter
+    document.getElementById('mensagem').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('enviar').click();
       }
     });
-  }
 
-  // Chame a função correta ao carregar
-  carregarMensagens();
-</script>
+    carregarMensagens();
+  </script>
 </body>
 </html>
