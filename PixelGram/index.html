@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Comunidade - Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6fb;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #2d3a4b;
+      margin-top: 40px;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .chat-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(44, 62, 80, 0.08);
+      padding: 32px 24px 16px 24px;
+      width: 100%;
+      max-width: 420px;
+      margin: 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .user-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .user-bar input {
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .user-bar input:focus {
+      border: 1.5px solid #3498db;
+    }
+    .chat-type-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .chat-type-bar button {
+      background: #e9eef6;
+      color: #2d3a4b;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-type-bar button:hover, .chat-type-bar button.active {
+      background: #3498db;
+      color: #fff;
+    }
+    #chat {
+      border-radius: 8px;
+      background: #f7fafc;
+      border: 1px solid #e1e4ea;
+      padding: 18px 12px;
+      height: 320px;
+      overflow-y: auto;
+      font-size: 15px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .msg {
+      padding: 8px 12px;
+      border-radius: 8px;
+      max-width: 80%;
+      word-break: break-word;
+      margin-bottom: 2px;
+      display: inline-block;
+      box-shadow: 0 1px 4px rgba(44,62,80,0.04);
+    }
+    .publico {
+      background: #eaf6ff;
+      color: #217dbb;
+      align-self: flex-start;
+    }
+    .privado {
+      background: #fff3e6;
+      color: #e67e22;
+      align-self: flex-end;
+    }
+    .input-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    #mensagem {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    #mensagem:focus {
+      border: 1.5px solid #3498db;
+    }
+    #enviar {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #enviar:hover {
+      background: #217dbb;
+    }
+    .sala-info {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .main-flex {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 900px;
+    }
+    .salas-container {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(44,62,80,0.06);
+      padding: 18px 14px;
+      min-width: 180px;
+      max-width: 220px;
+      font-size: 15px;
+      margin-top: 24px;
+      height: 400px;
+      overflow-y: auto;
+    }
+    .salas-container h3 {
+      font-size: 16px;
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #217dbb;
+      text-align: center;
+    }
+    .sala-item {
+      background: #eaf6ff;
+      color: #217dbb;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-align: center;
+      word-break: break-all;
+    }
+    .sala-item:hover {
+      background: #3498db;
+      color: #fff;
+    }
+  </style>
+  <!-- Adicione os scripts do Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h1>Comunidade - Chat</h1>
+  <div class="main-flex">
+    <div class="salas-container">
+      <h3>Salas Recentes</h3>
+      <div id="salas-list"></div>
+    </div>
+    <div class="chat-container">
+      <div class="user-bar">
+        <label for="usuario"><strong>Usuário:</strong></label>
+        <input type="text" id="usuario" placeholder="Seu nome" />
+      </div>
+      <div class="chat-type-bar">
+        <button id="btn-publico" onclick="mudarTipo('publico')" class="active">Chat Público</button>
+        <button id="btn-privado" onclick="mudarTipo('privado')">Chat Privado</button>
+      </div>
+      <div class="sala-info" id="sala-info"></div>
+      <div id="chat"></div>
+      <div class="input-bar">
+        <input type="text" id="mensagem" placeholder="Digite sua mensagem..." autocomplete="off" />
+        <button id="enviar">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configurações do seu Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEesXKUPQibsTXT48pQmL0yfOEHNwE85I",
+      authDomain: "pixelgram-fd1bf.firebaseapp.com",
+      databaseURL: "https://pixelgram-fd1bf-default-rtdb.firebaseio.com",
+      projectId: "pixelgram-fd1bf",
+      storageBucket: "pixelgram-fd1bf.firebasestorage.app",
+      messagingSenderId: "526005169331",
+      appId: "1:526005169331:web:7717c5a46a653e1ddc14c6",
+      measurementId: "G-B97XPZM2FN"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let tipo = 'publico';
+    let codigoSalaPrivada = null;
+    let ultimaChave = null;
+
+    // Botões de seleção de chat
+    function mudarTipo(novoTipo) {
+      tipo = novoTipo;
+      document.getElementById('btn-publico').classList.remove('active');
+      document.getElementById('btn-privado').classList.remove('active');
+      document.getElementById('sala-info').textContent = '';
+      if (tipo === 'privado') {
+        document.getElementById('btn-privado').classList.add('active');
+        // Pergunta se quer criar ou entrar numa sala privada
+        const acao = prompt("Digite '1' para criar uma sala privada ou '2' para entrar numa sala existente:");
+        if (acao === '1') {
+          // Criar sala: gera código aleatório
+          codigoSalaPrivada = Math.random().toString(36).substring(2, 8).toUpperCase();
+          alert("Código da sua sala privada: " + codigoSalaPrivada + "\nGuarde este código para partilhar com outros.");
+          document.getElementById('sala-info').textContent = "Sala privada: " + codigoSalaPrivada;
+          salvarSalaNoHistorico(codigoSalaPrivada);
+        } else if (acao === '2') {
+          // Entrar numa sala existente
+          codigoSalaPrivada = prompt("Digite o código da sala privada:");
+          if (!codigoSalaPrivada) {
+            tipo = 'publico';
+            codigoSalaPrivada = null;
+            document.getElementById('btn-publico').classList.add('active');
+            alert("Código inválido. Voltando ao chat público.");
+          } else {
+            document.getElementById('sala-info').textContent = "Sala privada: " + codigoSalaPrivada;
+            salvarSalaNoHistorico(codigoSalaPrivada);
+          }
+        } else {
+          tipo = 'publico';
+          codigoSalaPrivada = null;
+          document.getElementById('btn-publico').classList.add('active');
+          alert("Opção inválida. Voltando ao chat público.");
+        }
+      } else {
+        codigoSalaPrivada = null;
+        document.getElementById('btn-publico').classList.add('active');
+        document.getElementById('sala-info').textContent = "Chat público";
+      }
+      carregarMensagens();
+    }
+
+    // Notificações
+    document.addEventListener('DOMContentLoaded', function() {
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+      }
+      document.getElementById('sala-info').textContent = "Chat público";
+    });
+
+    function mostrarNotificacao(titulo, corpo) {
+      if (Notification.permission === "granted") {
+        new Notification(titulo, { body: corpo });
+      }
+    }
+
+    function carregarMensagens() {
+      db.ref('mensagens').off();
+      db.ref('mensagens').on('value', snapshot => {
+        const mensagens = snapshot.val() || {};
+        const chatDiv = document.getElementById('chat');
+        chatDiv.innerHTML = '';
+        let chaves = Object.keys(mensagens);
+        chaves.filter(k => {
+          const m = mensagens[k];
+          if (tipo === 'publico') return m.tipo === 'publico';
+          if (tipo === 'privado') return m.tipo === 'privado' && m.sala === codigoSalaPrivada;
+          return false;
+        }).forEach(k => {
+          const m = mensagens[k];
+          chatDiv.innerHTML += `<div class="msg ${m.tipo}"><strong>${m.usuario}:</strong> ${m.msg}</div>`;
+        });
+
+        // Notificar se chegou mensagem nova da sala correta e de outro usuário
+        if (chaves.length > 0) {
+          const ultimaKey = chaves[chaves.length - 1];
+          const ultimaMsg = mensagens[ultimaKey];
+          const usuarioAtual = document.getElementById('usuario').value || 'Anônimo';
+          const mesmaSala =
+            (tipo === 'publico' && ultimaMsg.tipo === 'publico') ||
+            (tipo === 'privado' && ultimaMsg.tipo === 'privado' && ultimaMsg.sala === codigoSalaPrivada);
+
+          if (
+            ultimaChave !== ultimaKey &&
+            ultimaMsg.usuario !== usuarioAtual &&
+            mesmaSala
+          ) {
+            mostrarNotificacao(ultimaMsg.usuario, ultimaMsg.msg);
+          }
+          ultimaChave = ultimaKey;
+        }
+        // Scroll automático para a última mensagem
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      });
+    }
+
+    function limparMensagensPublicasAntigas() {
+      db.ref('mensagens').once('value', snapshot => {
+        const mensagens = snapshot.val() || {};
+        const agora = Date.now();
+        Object.entries(mensagens).forEach(([key, msg]) => {
+          if (
+            msg.tipo === 'publico' &&
+            msg.timestamp &&
+            agora - msg.timestamp > 24 * 60 * 60 * 1000
+          ) {
+            db.ref('mensagens/' + key).remove();
+          }
+        });
+      });
+    }
+
+    document.getElementById('enviar').onclick = function() {
+      const usuario = document.getElementById('usuario').value || 'Anônimo';
+      const msg = document.getElementById('mensagem').value;
+      const proibidas = ["foda-se", "filho da puta", "merda", "caralho", "puta"];
+      const msgLower = msg.toLowerCase();
+      if (msg.trim() === '') return;
+      if (proibidas.some(p => msgLower.includes(p))) {
+        alert("Mensagem contém palavras proibidas!");
+        document.getElementById('mensagem').value = '';
+        return;
+      }
+      db.ref('mensagens').push({ usuario, msg, tipo, sala: codigoSalaPrivada, timestamp: Date.now() });
+      document.getElementById('mensagem').value = '';
+    };
+
+    // Enviar mensagem ao pressionar Enter
+    document.getElementById('mensagem').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('enviar').click();
+      }
+    });
+
+    // Funções para histórico de salas privadas
+    function salvarSalaNoHistorico(codigo) {
+      if (!codigo) return;
+      let salas = JSON.parse(localStorage.getItem('salasHistorico') || '[]');
+      if (!salas.includes(codigo)) {
+        salas.unshift(codigo);
+        if (salas.length > 10) salas = salas.slice(0, 10); // Limite de 10 salas
+        localStorage.setItem('salasHistorico', JSON.stringify(salas));
+      }
+      mostrarSalasHistorico();
+    }
+
+    function mostrarSalasHistorico() {
+      const salas = JSON.parse(localStorage.getItem('salasHistorico') || '[]');
+      const salasList = document.getElementById('salas-list');
+      salasList.innerHTML = '';
+      if (salas.length === 0) {
+        salasList.innerHTML = '<div style="color:#aaa;text-align:center;">Nenhuma sala</div>';
+        return;
+      }
+      salas.forEach(codigo => {
+        const div = document.createElement('div');
+        div.className = 'sala-item';
+        div.textContent = codigo;
+        div.onclick = function() {
+          tipo = 'privado';
+          codigoSalaPrivada = codigo;
+          document.getElementById('btn-publico').classList.remove('active');
+          document.getElementById('btn-privado').classList.add('active');
+          document.getElementById('sala-info').textContent = "Sala privada: " + codigoSalaPrivada;
+          carregarMensagens();
+        };
+        salasList.appendChild(div);
+      });
+    }
+
+    // Chame ao carregar a página
+    mostrarSalasHistorico();
+    carregarMensagens();
+    document.addEventListener('DOMContentLoaded', function() {
+      limparMensagensPublicasAntigas();
+    });
+  </script>
+</body>
+</html>
