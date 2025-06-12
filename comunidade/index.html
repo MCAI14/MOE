@@ -45,10 +45,35 @@
     const db = firebase.database();
 
     let tipo = 'publico';
+    let codigoSalaPrivada = null;
 
     function mudarTipo(novoTipo) {
       tipo = novoTipo;
-      document.getElementById('chat').innerHTML += `<div><em>Alterado para chat ${tipo}</em></div>`;
+      if (tipo === 'privado') {
+        // Pergunta se quer criar ou entrar numa sala privada
+        const acao = prompt("Digite '1' para criar uma sala privada ou '2' para entrar numa sala existente:");
+        if (acao === '1') {
+          // Criar sala: gera código aleatório
+          codigoSalaPrivada = Math.random().toString(36).substring(2, 8).toUpperCase();
+          alert("Código da sua sala privada: " + codigoSalaPrivada + "\nGuarde este código para partilhar com outros.");
+        } else if (acao === '2') {
+          // Entrar numa sala existente
+          codigoSalaPrivada = prompt("Digite o código da sala privada:");
+          if (!codigoSalaPrivada) {
+            tipo = 'publico';
+            codigoSalaPrivada = null;
+            alert("Código inválido. Voltando ao chat público.");
+          }
+        } else {
+          tipo = 'publico';
+          codigoSalaPrivada = null;
+          alert("Opção inválida. Voltando ao chat público.");
+        }
+        document.getElementById('chat').innerHTML += `<div><em>Alterado para chat privado${codigoSalaPrivada ? " (" + codigoSalaPrivada + ")" : ""}</em></div>`;
+      } else {
+        codigoSalaPrivada = null;
+        document.getElementById('chat').innerHTML += `<div><em>Alterado para chat público</em></div>`;
+      }
       carregarMensagens();
     }
 
@@ -68,8 +93,16 @@
     document.getElementById('enviar').onclick = function() {
       const usuario = document.getElementById('usuario').value || 'Anônimo';
       const msg = document.getElementById('mensagem').value;
+      // Lista simples de palavras proibidas (adicione mais se quiser)
+      const proibidas = ["foda-se", "filho da puta", "merda", "caralho", "puta"];
+      const msgLower = msg.toLowerCase();
       if (msg.trim() === '') return;
-      db.ref('mensagens').push({ usuario, msg, tipo });
+      if (proibidas.some(p => msgLower.includes(p))) {
+        alert("Mensagem contém palavras proibidas!");
+        document.getElementById('mensagem').value = '';
+        return;
+      }
+      db.ref('mensagens').push({ usuario, msg, tipo, sala: codigoSalaPrivada });
       document.getElementById('mensagem').value = '';
     };
 
@@ -99,7 +132,12 @@
       const mensagens = snapshot.val() || {};
       document.getElementById('chat').innerHTML = '';
       let chaves = Object.keys(mensagens);
-      chaves.filter(k => mensagens[k].tipo === tipo).forEach(k => {
+      chaves.filter(k => {
+        const m = mensagens[k];
+        if (tipo === 'publico') return m.tipo === 'publico';
+        if (tipo === 'privado') return m.tipo === 'privado' && m.sala === codigoSalaPrivada;
+        return false;
+      }).forEach(k => {
         const m = mensagens[k];
         document.getElementById('chat').innerHTML += `<div class="${m.tipo}"><strong>${m.usuario}:</strong> ${m.msg}</div>`;
       });
