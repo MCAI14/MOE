@@ -12,6 +12,9 @@
     .privado { color: #e67e22; }
     .publico { color: #3498db; }
   </style>
+  <!-- Adicione os scripts do Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
   <h1>Comunidade - Chat</h1>
@@ -27,19 +30,50 @@
   <button id="enviar">Enviar</button>
 
   <script>
+    // Configurações do seu Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEesXKUPQibsTXT48pQmL0yfOEHNwE85I",
+      authDomain: "pixelgram-fd1bf.firebaseapp.com",
+      databaseURL: "https://pixelgram-fd1bf-default-rtdb.firebaseio.com",
+      projectId: "pixelgram-fd1bf",
+      storageBucket: "pixelgram-fd1bf.firebasestorage.app",
+      messagingSenderId: "526005169331",
+      appId: "1:526005169331:web:7717c5a46a653e1ddc14c6",
+      measurementId: "G-B97XPZM2FN"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     let tipo = 'publico';
+
     function mudarTipo(novoTipo) {
       tipo = novoTipo;
       document.getElementById('chat').innerHTML += `<div><em>Alterado para chat ${tipo}</em></div>`;
+      carregarMensagens();
     }
+
+    function carregarMensagens() {
+      db.ref('mensagens').off();
+      db.ref('mensagens').on('value', snapshot => {
+        const mensagens = snapshot.val() || [];
+        document.getElementById('chat').innerHTML = '';
+        Object.values(mensagens)
+          .filter(m => m.tipo === tipo)
+          .forEach(m => {
+            document.getElementById('chat').innerHTML += `<div class="${m.tipo}"><strong>${m.usuario}:</strong> ${m.msg}</div>`;
+          });
+      });
+    }
+
     document.getElementById('enviar').onclick = function() {
       const usuario = document.getElementById('usuario').value || 'Anônimo';
       const msg = document.getElementById('mensagem').value;
       if (msg.trim() === '') return;
-      document.getElementById('chat').innerHTML += `<div class="${tipo}"><strong>${usuario}:</strong> ${msg}</div>`;
+      db.ref('mensagens').push({ usuario, msg, tipo });
       document.getElementById('mensagem').value = '';
-      // Aqui você pode adicionar código para enviar a mensagem ao backend
     };
+
+    carregarMensagens();
   </script>
 </body>
 </html>
