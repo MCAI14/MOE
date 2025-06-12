@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Comunidade - Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    #chat { border: 1px solid #ccc; padding: 20px; height: 300px; overflow-y: scroll; }
+    #mensagem { width: 80%; }
+    #enviar { padding: 8px 16px; }
+    .privado { color: #e67e22; }
+    .publico { color: #3498db; }
+  </style>
+</head>
+<body>
+  <h1>Comunidade - Chat</h1>
+  <div>
+    <label>Usuário: <input type="text" id="usuario" /></label>
+  </div>
+  <div>
+    <button onclick="mudarTipo('publico')">Chat Público</button>
+    <button onclick="mudarTipo('privado')">Chat Privado</button>
+  </div>
+  <div id="chat"></div>
+  <input type="text" id="mensagem" placeholder="Digite sua mensagem..." />
+  <button id="enviar">Enviar</button>
+
+  <script>
+    let tipo = 'publico';
+    function mudarTipo(novoTipo) {
+      tipo = novoTipo;
+      document.getElementById('chat').innerHTML += `<div><em>Alterado para chat ${tipo}</em></div>`;
+    }
+    document.getElementById('enviar').onclick = function() {
+      const usuario = document.getElementById('usuario').value || 'Anônimo';
+      const msg = document.getElementById('mensagem').value;
+      if (msg.trim() === '') return;
+      document.getElementById('chat').innerHTML += `<div class="${tipo}"><strong>${usuario}:</strong> ${msg}</div>`;
+      document.getElementById('mensagem').value = '';
+      // Aqui você pode adicionar código para enviar a mensagem ao backend
+    };
+  </script>
+</body>
+</html>
