@@ -75,5 +75,48 @@
 
     carregarMensagens();
   </script>
+  <script>
+  // Solicita permissão para notificações ao carregar a página
+  document.addEventListener('DOMContentLoaded', function() {
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+  });
+
+  function mostrarNotificacao(titulo, corpo) {
+    if (Notification.permission === "granted") {
+      new Notification(titulo, { body: corpo });
+    }
+  }
+
+  // Notificação ao receber nova mensagem (exceto as do próprio usuário)
+  let ultimaChave = null;
+  function carregarMensagens() {
+    db.ref('mensagens').off();
+    db.ref('mensagens').on('value', snapshot => {
+      const mensagens = snapshot.val() || {};
+      document.getElementById('chat').innerHTML = '';
+      let chaves = Object.keys(mensagens);
+      chaves.filter(k => mensagens[k].tipo === tipo).forEach(k => {
+        const m = mensagens[k];
+        document.getElementById('chat').innerHTML += `<div class="${m.tipo}"><strong>${m.usuario}:</strong> ${m.msg}</div>`;
+      });
+
+      // Notificar se chegou mensagem nova de outro usuário
+      if (chaves.length > 0) {
+        const ultimaMsg = mensagens[chaves[chaves.length - 1]];
+        if (
+          ultimaChave !== chaves[chaves.length - 1] &&
+          ultimaMsg.usuario !== (document.getElementById('usuario').value || 'Anônimo')
+        ) {
+          mostrarNotificacao(ultimaMsg.usuario, ultimaMsg.msg);
+        }
+        ultimaChave = chaves[chaves.length - 1];
+      }
+    });
+  }
+</script>
 </body>
 </html>
