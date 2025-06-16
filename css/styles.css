@@ -13,7 +13,7 @@
 body {
   font-family: 'Segoe UI', sans-serif;
   line-height: 1.6;
-  background-color: var(--cor-clara);
+  background-color: #191821;
   color: #333;
 }
 
@@ -56,7 +56,7 @@ body {
 }
 
 #hero {
-  background: linear-gradient(to right, #00aaff, #005f7f);
+  background-color: transparent;
   color: white;
   padding: 4rem 2rem;
   text-align: center;
