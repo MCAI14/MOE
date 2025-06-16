@@ -1,14 +1,83 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
-  <meta charset="UTF-8">
-  <title>Meu Site Pessoal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfólio - [Seu Nome]</title>
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <h1>Bem-vindo ao meu site pessoal!</h1>
-  <p>Este é o início do meu portfólio online.</p>
-  <button class="btn-comunidade" onclick="window.location.href='comunidade/index.html'">Comunidade</button>
+
+  <header class="navbar">
+    <div class="container">
+      <h1 class="logo">[Seu Nome]</h1>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#sobre">Sobre</a></li>
+          <li><a href="#projetos">Projetos</a></li>
+          <li><a href="#contato">Contato</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section id="hero">
+    <div class="container hero-content">
+      <img src="images/men.jpg" alt="Minha Foto" class="foto-perfil" />
+      <div>
+        <h2>Olá, sou [Seu Nome]</h2>
+        <p>Desenvolvedor Front-End focado em criar experiências modernas, responsivas e agradáveis na web.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="sobre" class="section light">
+    <div class="container">
+      <h2>Sobre Mim</h2>
+      <p>Tenho experiência com HTML, CSS, JavaScript e frameworks modernos. Amo transformar ideias em interfaces funcionais e estéticas.</p>
+    </div>
+  </section>
+
+  <section id="projetos" class="section">
+    <div class="container">
+      <h2>Projetos</h2>
+      <div class="projetos-grid">
+        <div class="card">
+          <img src="https://via.placeholder.com/300x200" alt="Projeto 1" />
+          <h3>Projeto 1</h3>
+          <p>Descrição breve do projeto 1. O que ele faz, tecnologias usadas, etc.</p>
+        </div>
+        <div class="card">
+          <img src="https://via.placeholder.com/300x200" alt="Projeto 2" />
+          <h3>Projeto 2</h3>
+          <p>Outro projeto interessante com uma pequena explicação.</p>
+        </div>
+        <div class="card">
+          <img src="https://via.placeholder.com/300x200" alt="Projeto 3" />
+          <h3>Projeto 3</h3>
+          <p>Mais um exemplo de trabalho feito com carinho.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contato" class="section light">
+    <div class="container">
+      <h2>Contato</h2>
+      <p>Você pode me encontrar em:</p>
+      <ul class="contato-info">
+        <li>Email: <a href="mailto:seuemail@example.com">seuemail@example.com</a></li>
+        <li>LinkedIn: <a href="#">linkedin.com/in/seuusuario</a></li>
+        <li>GitHub: <a href="#">github.com/seuusuario</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 [Seu Nome] | Feito com 💙</p>
+    </div>
+  </footer>
+
 </body>
 </html>
