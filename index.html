@@ -3,81 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title><MM50I Portfolio></title>
+  <title>MM50I — Portfolio</title>
+
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-<div id="main">
-  <header class="navbar">
-    <div class="container">
-      <h1 class="logo">MM50I</h1>
-      <nav>
-        <ul class="nav-links">
-          <li><a href="#about">About</a></li>
-          <li><a href="#projects">Projects</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <div id="main">
+    <header class="navbar">
+      <div class="container nav-inner">
+        <h1 class="logo">MM50I</h1>
 
-  <section id="hero">
-    <div class="container hero-content">
-      <img src="images/Avatar.png" alt="Minha Foto" class="foto-perfil" />
-      <div>
-        <h2>Olá, eu sou o Miguel!</h2>
-        <p>Desenvolvedor de sites, programas e um sistema operativo.</p>
+        <button class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+          <span class="hamburger"></span>
+        </button>
+
+        <nav class="nav" id="site-nav">
+          <ul class="nav-links">
+            <li><a href="#about">Sobre</a></li>
+            <li><a href="#projects">Projetos</a></li>
+            <li><a href="#contact">Contacto</a></li>
+          </ul>
+        </nav>
       </div>
-    </div>
-  </section>
+    </header>
 
-  <section id="about" class="section light">
-    <div class="container">
-      <h2>Languages that I use</h2>
-      <i class="fa-brands fa-python"></i>
-    </div>
-  </section>
+    <main>
+      <section id="hero" class="hero">
+        <div class="container hero-grid">
+          <div class="hero-text">
+            <h2>Olá, eu sou o Miguel</h2>
+            <p class="lead">Desenvolvedor web, criador de aplicações e entusiasta de sistemas operativos. Constrói projetos limpos e responsivos com atenção ao detalhe.</p>
+            <div class="hero-ctas">
+              <a class="btn primary" href="#projects">Ver projetos</a>
+              <a class="btn outline" href="#contact">Contactar</a>
+            </div>
+            <div class="langs">
+              <span><i class="fa-brands fa-python"></i> Python</span>
+              <span><i class="fa-brands fa-js-square"></i> JavaScript</span>
+              <span><i class="fa-brands fa-html5"></i> HTML</span>
+              <span><i class="fa-brands fa-css3-alt"></i> CSS</span>
+            </div>
+          </div>
 
-  <section id="projects" class="section">
-    <div class="container">
-      <h2>Projetos</h2>
-      <div class="projetos-grid">
-        <div class="card">
-          <img src="https://via.placeholder.com/300x200" alt="Projeto 1" />
-          <h3>Projeto 1</h3>
-          <p>Descrição breve do projeto 1. O que ele faz, tecnologias usadas, etc.</p>
+          <div class="hero-avatar">
+            <img src="images/Avatar.png" alt="Foto de perfil" class="avatar" />
+          </div>
         </div>
-        <div class="card">
-          <img src="https://via.placeholder.com/300x200" alt="Projeto 2" />
-          <h3>Projeto 2</h3>
-          <p>Outro projeto interessante com uma pequena explicação.</p>
+      </section>
+
+      <section id="about" class="section light">
+        <div class="container">
+          <h2>Sobre mim</h2>
+          <p>Tenho experiência em desenvolvimento front-end e back-end, criação de ferramentas e pequenos sistemas operativos experimentais. Gosto de otimizar desempenho e criar interfaces claras.</p>
         </div>
-        <div class="card">
-          <img src="https://via.placeholder.com/300x200" alt="Projeto 3" />
-          <h3>Projeto 3</h3>
-          <p>Mais um exemplo de trabalho feito com carinho.</p>
+      </section>
+
+      <section id="projects" class="section">
+        <div class="container">
+          <h2>Projetos</h2>
+          <div class="projetos-grid">
+            <article class="card">
+              <img src="https://via.placeholder.com/600x360" alt="Projeto 1" />
+              <div class="card-body">
+                <h3>Projeto 1</h3>
+                <p>Descrição breve do projeto 1. Tecnologias usadas: HTML, CSS, JavaScript.</p>
+                <a class="link" href="#">Ver mais →</a>
+              </div>
+            </article>
+
+            <article class="card">
+              <img src="https://via.placeholder.com/600x360" alt="Projeto 2" />
+              <div class="card-body">
+                <h3>Projeto 2</h3>
+                <p>Outro projeto interessante com uma pequena explicação.</p>
+                <a class="link" href="#">Ver mais →</a>
+              </div>
+            </article>
+
+            <article class="card">
+              <img src="https://via.placeholder.com/600x360" alt="Projeto 3" />
+              <div class="card-body">
+                <h3>Projeto 3</h3>
+                <p>Mais um exemplo de trabalho feito com carinho.</p>
+                <a class="link" href="#">Ver mais →</a>
+              </div>
+            </article>
+          </div>
         </div>
+      </section>
+
+      <section id="contact" class="section light">
+        <div class="container">
+          <h2>Contacto</h2>
+          <p>Encontre-me nas redes ou envie um e‑mail.</p>
+          <ul class="contato-info">
+            <li>Email: <a href="mailto:seuemail@example.com">seuemail@example.com</a></li>
+            <li>LinkedIn: <a href="#">linkedin.com/in/seuusuario</a></li>
+            <li>GitHub: <a href="#">github.com/seuusuario</a></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>&copy; 2025 Miguel | Feito com 💙</p>
       </div>
-    </div>
-  </section>
+    </footer>
+  </div>
 
-  <section id="contacts" class="section light">
-    <div class="container">
-      <h2>Contato</h2>
-      <p>Você pode me encontrar em:</p>
-      <ul class="contato-info">
-        <li>Email: <a href="mailto:seuemail@example.com">seuemail@example.com</a></li>
-        <li>LinkedIn: <a href="#">linkedin.com/in/seuusuario</a></li>
-        <li>GitHub: <a href="#">github.com/seuusuario</a></li>
-      </ul>
-    </div>
-  </section>
-
-  <footer>
-    <div class="container">
-      <p>&copy; 2025 [Seu Nome] | Feito com 💙</p>
-    </div>
-  </footer>
-</div>
+  <script>
+    // Pequeno JS para menu móvel
+    const btn = document.querySelector('.nav-toggle');
+    const nav = document.getElementById('site-nav');
+    btn?.addEventListener('click', () => {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+      nav?.classList.toggle('open');
+    });
+  </script>
 </body>
 </html>
