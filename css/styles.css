@@ -86,7 +86,7 @@ body {
 /* Hero */
 .hero {
   padding: 4rem 0;
-  background: linear-gradient(135deg, #e6f2ff 0%, #ffffff 60%);
+  background: linear-gradient(135deg, #0e141b 0%, #000000 60%);
 }
 .hero-grid {
   display: grid;
