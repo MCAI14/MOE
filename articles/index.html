@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Artigos — MM50I</title>
+  <title>Articles — MM50I</title>
 
   <!-- Font & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -105,16 +105,16 @@
       <div class="container nav-inner">
         <h1 class="logo"><a href="../index.html" style="text-decoration: none; color: inherit;">MM50I</a></h1>
 
-        <button class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+        <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">
           <span class="hamburger"></span>
         </button>
 
         <nav class="nav" id="site-nav">
           <ul class="nav-links">
-            <li><a href="../index.html#about">Sobre</a></li>
-            <li><a href="../index.html#projects">Projetos</a></li>
-            <li><a href="../index.html#contact">Contacto</a></li>
-            <li><a href="index.html">Artigos</a></li>
+            <li><a href="../index.html#about">About</a></li>
+            <li><a href="../index.html#projects">Projects</a></li>
+            <li><a href="../index.html#contact">Contact</a></li>
+            <li><a href="index.html">Articles</a></li>
           </ul>
         </nav>
       </div>
@@ -123,12 +123,12 @@
     <main>
       <section class="section">
         <div class="container">
-          <h2>Artigos</h2>
-          <p>Explora os meus artigos sobre tecnologia, desenvolvimento web e muito mais.</p>
+          <h2>Articles</h2>
+          <p>Explore my articles about technology, web development and much more.</p>
 
           <div id="articles-list" class="articles-container">
             <div class="loading">
-              <i class="fas fa-spinner fa-spin"></i> Carregando artigos...
+              <i class="fas fa-spinner fa-spin"></i> Loading articles...
             </div>
           </div>
 
@@ -139,7 +139,7 @@
 
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2025 Miguel. Todos os direitos reservados.</p>
+        <p>&copy; 2025 Miguel. All rights reserved.</p>
       </div>
     </footer>
   </div>
@@ -174,7 +174,7 @@
         .get()
         .then((snapshot) => {
           if (snapshot.empty) {
-            articlesList.innerHTML = '<div class="empty-state">Nenhum artigo disponível no momento.</div>';
+            articlesList.innerHTML = '<div class="empty-state">No articles available at this time.</div>';
             return;
           }
 
@@ -185,26 +185,26 @@
             const articleCard = document.createElement('article');
             articleCard.className = 'article-card';
 
-            const imageUrl = article.image || 'https://via.placeholder.com/600x400?text=Sem+Imagem';
-            let date = 'Data desconhecida';
+            const imageUrl = article.image || 'https://via.placeholder.com/600x400?text=No+Image';
+            let date = 'Unknown date';
             
             if (article.date) {
               if (article.date.toDate) {
-                // Se for Timestamp do Firestore
-                date = article.date.toDate().toLocaleDateString('pt-PT');
+                // If it's a Firestore Timestamp
+                date = article.date.toDate().toLocaleDateString('en-US');
               } else if (typeof article.date === 'string') {
-                date = new Date(article.date).toLocaleDateString('pt-PT');
+                date = new Date(article.date).toLocaleDateString('en-US');
               }
             }
             
-            const link = article.link ? `<a href="${article.link}" class="article-link" target="_blank">Ler artigo →</a>` : '';
+            const link = article.link ? `<a href="${article.link}" class="article-link" target="_blank">Read article →</a>` : '';
 
             articleCard.innerHTML = `
-              <img src="${imageUrl}" alt="${article.title}" onerror="this.src='https://via.placeholder.com/600x400?text=Sem+Imagem'">
+              <img src="${imageUrl}" alt="${article.title}" onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'">
               <div class="article-body">
-                <h3>${article.title || 'Sem título'}</h3>
+                <h3>${article.title || 'No title'}</h3>
                 <p class="article-date">${date}</p>
-                <p>${article.excerpt || article.description || 'Sem descrição disponível'}</p>
+                <p>${article.excerpt || article.description || 'No description available'}</p>
                 ${link}
               </div>
             `;
@@ -216,14 +216,14 @@
           articlesList.style.display = 'none';
           errorMessage.style.display = 'block';
           errorMessage.className = 'error';
-          errorMessage.innerHTML = `<strong>Erro ao carregar artigos:</strong> ${error.message}`;
+          errorMessage.innerHTML = `<strong>Error loading articles:</strong> ${error.message}`;
         });
     }
 
-    // Carrega artigos quando a página estiver pronta
+    // Load articles when the page is ready
     document.addEventListener('DOMContentLoaded', loadArticles);
 
-    // Menu responsivo
+    // Responsive menu
     document.addEventListener('DOMContentLoaded', function() {
       const navToggle = document.querySelector('.nav-toggle');
       const nav = document.getElementById('site-nav');

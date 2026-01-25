@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Article — MM50I Admin</title>
+
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 0.95rem;
+    }
+
+    .content {
+      padding: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    input[type="url"],
+    input[type="datetime-local"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    input[type="datetime-local"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    button {
+      flex: 1;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-reset {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-reset:hover {
+      background: #e0e0e0;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      display: none;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .alert.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .alert.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .btn-submit.loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-submit.loading .loading-spinner {
+      display: inline-block;
+    }
+
+    .help-text {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+
+    .preview-section {
+      background: #f9f9f9;
+      padding: 1.5rem;
+      border-radius: 6px;
+      margin-top: 2rem;
+      display: none;
+    }
+
+    .preview-section.active {
+      display: block;
+    }
+
+    .preview-card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .preview-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: #f0f0f0;
+    }
+
+    .preview-body {
+      padding: 1.5rem;
+    }
+
+    .preview-body h3 {
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-date {
+      font-size: 0.85rem;
+      color: #999;
+      margin-bottom: 1rem;
+    }
+
+    .preview-body p {
+      color: #666;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-pen-fancy"></i> Create Article</h1>
+      <p>Add a new article to your portfolio</p>
+    </div>
+
+    <div class="content">
+      <div id="alert-message" class="alert"></div>
+
+      <form id="article-form">
+        <div class="form-group">
+          <label for="title">Article Title *</label>
+          <input 
+            type="text" 
+            id="title" 
+            name="title" 
+            placeholder="e.g., Getting Started with JavaScript"
+            required
+          />
+          <p class="help-text">The main title of your article</p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="excerpt">Excerpt *</label>
+            <input 
+              type="text" 
+              id="excerpt" 
+              name="excerpt" 
+              placeholder="Brief summary (one line)"
+              required
+            />
+            <p class="help-text">Short preview text</p>
+          </div>
+
+          <div class="form-group">
+            <label for="date">Publication Date *</label>
+            <input 
+              type="datetime-local" 
+              id="date" 
+              name="date"
+              required
+            />
+            <p class="help-text">When was it published?</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea 
+            id="description" 
+            name="description" 
+            placeholder="Full description of the article. You can use this for a longer overview."
+            required
+          ></textarea>
+          <p class="help-text">Detailed explanation of the article content</p>
+        </div>
+
+        <div class="form-group">
+          <label for="image">Image URL</label>
+          <input 
+            type="url" 
+            id="image" 
+            name="image" 
+            placeholder="https://example.com/image.jpg"
+          />
+          <p class="help-text">URL to the article thumbnail image</p>
+        </div>
+
+        <div class="form-group">
+          <label for="link">Article URL</label>
+          <input 
+            type="url" 
+            id="link" 
+            name="link" 
+            placeholder="https://example.com/article"
+          />
+          <p class="help-text">Link to the full article (optional)</p>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="btn-submit">
+            <span class="loading-spinner"></span>
+            <span>Create Article</span>
+          </button>
+          <button type="reset" class="btn-reset">Clear Form</button>
+        </div>
+      </form>
+
+      <div id="preview" class="preview-section">
+        <h3 style="margin-bottom: 1rem; color: #333;">Preview</h3>
+        <div class="preview-card">
+          <img id="preview-image" src="https://via.placeholder.com/600x400?text=No+Image" alt="Preview" class="preview-image" />
+          <div class="preview-body">
+            <h3 id="preview-title">Article Title</h3>
+            <p class="preview-date" id="preview-date">Date</p>
+            <p id="preview-excerpt">Excerpt text will appear here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA6F4G0yVFWNEaynsfDBM9qVbPWqc0bzrM",
+      authDomain: "pixelcloudarchive.firebaseapp.com",
+      projectId: "pixelcloudarchive",
+      storageBucket: "pixelcloudarchive.firebasestorage.app",
+      messagingSenderId: "587541372480",
+      appId: "1:587541372480:web:f4ec190efcf9ebf9e189a5",
+      measurementId: "G-05EHTT3899"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // DOM Elements
+    const form = document.getElementById('article-form');
+    const alertDiv = document.getElementById('alert-message');
+    const previewSection = document.getElementById('preview');
+    const submitBtn = form.querySelector('.btn-submit');
+    const loadingSpinner = submitBtn.querySelector('.loading-spinner');
+
+    // Form inputs
+    const titleInput = document.getElementById('title');
+    const excerptInput = document.getElementById('excerpt');
+    const dateInput = document.getElementById('date');
+    const descriptionInput = document.getElementById('description');
+    const imageInput = document.getElementById('image');
+    const linkInput = document.getElementById('link');
+
+    // Preview elements
+    const previewTitle = document.getElementById('preview-title');
+    const previewExcerpt = document.getElementById('preview-excerpt');
+    const previewDate = document.getElementById('preview-date');
+    const previewImage = document.getElementById('preview-image');
+
+    // Show Alert Message
+    function showAlert(message, type) {
+      alertDiv.textContent = message;
+      alertDiv.className = `alert ${type}`;
+      setTimeout(() => {
+        alertDiv.className = 'alert';
+      }, 5000);
+    }
+
+    // Update Preview
+    function updatePreview() {
+      const title = titleInput.value || 'Article Title';
+      const excerpt = excerptInput.value || 'Excerpt text will appear here';
+      const imageUrl = imageInput.value || 'https://via.placeholder.com/600x400?text=No+Image';
+      const dateValue = dateInput.value;
+
+      let formattedDate = 'Date';
+      if (dateValue) {
+        const date = new Date(dateValue);
+        formattedDate = date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+
+      previewTitle.textContent = title;
+      previewExcerpt.textContent = excerpt;
+      previewDate.textContent = formattedDate;
+      previewImage.src = imageUrl;
+      previewImage.onerror = () => {
+        previewImage.src = 'https://via.placeholder.com/600x400?text=Invalid+Image';
+      };
+
+      previewSection.classList.add('active');
+    }
+
+    // Form Input Change Listener
+    [titleInput, excerptInput, dateInput, imageInput].forEach(input => {
+      input.addEventListener('change', updatePreview);
+      input.addEventListener('input', updatePreview);
+    });
+
+    // Set default date to now
+    dateInput.addEventListener('focus', () => {
+      if (!dateInput.value) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        dateInput.value = now.toISOString().slice(0, 16);
+      }
+    });
+
+    // Form Submit Handler
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = titleInput.value.trim();
+      const excerpt = excerptInput.value.trim();
+      const description = descriptionInput.value.trim();
+      const dateValue = dateInput.value;
+      const imageUrl = imageInput.value.trim();
+      const linkUrl = linkInput.value.trim();
+
+      // Validation
+      if (!title || !excerpt || !description || !dateValue) {
+        showAlert('Please fill in all required fields (marked with *)', 'error');
+        return;
+      }
+
+      // Disable submit button and show loading
+      submitBtn.disabled = true;
+      loadingSpinner.style.display = 'inline-block';
+
+      try {
+        // Convert date string to Firebase Timestamp
+        const date = new Date(dateValue);
+
+        // Create article object
+        const articleData = {
+          title,
+          excerpt,
+          description,
+          date: firebase.firestore.Timestamp.fromDate(date),
+          image: imageUrl || null,
+          link: linkUrl || null,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Add to Firestore
+        const docRef = await db.collection('articles').add(articleData);
+
+        // Success
+        showAlert(`✓ Article created successfully! (ID: ${docRef.id})`, 'success');
+        form.reset();
+        previewSection.classList.remove('active');
+
+      } catch (error) {
+        console.error('Error adding article:', error);
+        showAlert(`Error: ${error.message}`, 'error');
+
+      } finally {
+        // Re-enable submit button and hide loading
+        submitBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+      }
+    });
+
+    // Initialize preview with current date
+    window.addEventListener('load', () => {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      dateInput.value = now.toISOString().slice(0, 16);
+      updatePreview();
+    });
+  </script>
+</body>
+</html>
