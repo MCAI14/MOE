@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Artigos — MM50I</title>
+
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    .articles-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .article-card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .article-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .article-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: #f0f0f0;
+    }
+
+    .article-body {
+      padding: 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .article-body h3 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+      font-size: 1.25rem;
+    }
+
+    .article-date {
+      font-size: 0.85rem;
+      color: #999;
+      margin-bottom: 1rem;
+    }
+
+    .article-body p {
+      margin: 0 0 1rem 0;
+      color: #666;
+      font-size: 0.95rem;
+      flex: 1;
+    }
+
+    .article-link {
+      color: #0066cc;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    .article-link:hover {
+      color: #0052a3;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
+    }
+
+    .error {
+      background: #fee;
+      color: #c33;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-top: 1rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="main">
+    <header class="navbar">
+      <div class="container nav-inner">
+        <h1 class="logo"><a href="../index.html" style="text-decoration: none; color: inherit;">MM50I</a></h1>
+
+        <button class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+          <span class="hamburger"></span>
+        </button>
+
+        <nav class="nav" id="site-nav">
+          <ul class="nav-links">
+            <li><a href="../index.html#about">Sobre</a></li>
+            <li><a href="../index.html#projects">Projetos</a></li>
+            <li><a href="../index.html#contact">Contacto</a></li>
+            <li><a href="index.html">Artigos</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="section">
+        <div class="container">
+          <h2>Artigos</h2>
+          <p>Explora os meus artigos sobre tecnologia, desenvolvimento web e muito mais.</p>
+
+          <div id="articles-list" class="articles-container">
+            <div class="loading">
+              <i class="fas fa-spinner fa-spin"></i> Carregando artigos...
+            </div>
+          </div>
+
+          <div id="error-message" style="display: none;"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; 2025 Miguel. Todos os direitos reservados.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+
+  <script>
+    // Substitui com a tua configuração do Firebase
+    const firebaseConfig = {
+  apiKey: "AIzaSyA6F4G0yVFWNEaynsfDBM9qVbPWqc0bzrM",
+  authDomain: "pixelcloudarchive.firebaseapp.com",
+  projectId: "pixelcloudarchive",
+  storageBucket: "pixelcloudarchive.firebasestorage.app",
+  messagingSenderId: "587541372480",
+  appId: "1:587541372480:web:f4ec190efcf9ebf9e189a5",
+  measurementId: "G-05EHTT3899"
+};
+
+    // Inicializa Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Busca artigos da Firestore
+    function loadArticles() {
+      const articlesList = document.getElementById('articles-list');
+      const errorMessage = document.getElementById('error-message');
+
+      db.collection('articles')
+        .orderBy('date', 'desc')
+        .get()
+        .then((snapshot) => {
+          if (snapshot.empty) {
+            articlesList.innerHTML = '<div class="empty-state">Nenhum artigo disponível no momento.</div>';
+            return;
+          }
+
+          articlesList.innerHTML = '';
+          
+          snapshot.forEach((doc) => {
+            const article = doc.data();
+            const articleCard = document.createElement('article');
+            articleCard.className = 'article-card';
+
+            const imageUrl = article.image || 'https://via.placeholder.com/600x400?text=Sem+Imagem';
+            let date = 'Data desconhecida';
+            
+            if (article.date) {
+              if (article.date.toDate) {
+                // Se for Timestamp do Firestore
+                date = article.date.toDate().toLocaleDateString('pt-PT');
+              } else if (typeof article.date === 'string') {
+                date = new Date(article.date).toLocaleDateString('pt-PT');
+              }
+            }
+            
+            const link = article.link ? `<a href="${article.link}" class="article-link" target="_blank">Ler artigo →</a>` : '';
+
+            articleCard.innerHTML = `
+              <img src="${imageUrl}" alt="${article.title}" onerror="this.src='https://via.placeholder.com/600x400?text=Sem+Imagem'">
+              <div class="article-body">
+                <h3>${article.title || 'Sem título'}</h3>
+                <p class="article-date">${date}</p>
+                <p>${article.excerpt || article.description || 'Sem descrição disponível'}</p>
+                ${link}
+              </div>
+            `;
+
+            articlesList.appendChild(articleCard);
+          });
+        })
+        .catch((error) => {
+          articlesList.style.display = 'none';
+          errorMessage.style.display = 'block';
+          errorMessage.className = 'error';
+          errorMessage.innerHTML = `<strong>Erro ao carregar artigos:</strong> ${error.message}`;
+        });
+    }
+
+    // Carrega artigos quando a página estiver pronta
+    document.addEventListener('DOMContentLoaded', loadArticles);
+
+    // Menu responsivo
+    document.addEventListener('DOMContentLoaded', function() {
+      const navToggle = document.querySelector('.nav-toggle');
+      const nav = document.getElementById('site-nav');
+
+      if (navToggle) {
+        navToggle.addEventListener('click', function() {
+          nav.classList.toggle('active');
+          this.setAttribute('aria-expanded', this.getAttribute('aria-expanded') === 'false' ? 'true' : 'false');
+        });
+
+        document.querySelectorAll('.nav-links a').forEach(link => {
+          link.addEventListener('click', function() {
+            nav.classList.remove('active');
+            navToggle.setAttribute('aria-expanded', 'false');
+          });
+        });
+      }
+    });
+  </script>
+</body>
+</html>
