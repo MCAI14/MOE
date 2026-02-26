@@ -132,6 +132,11 @@
 
   <script>
     // static explorer: data stored in JSON files under /data/<collection>.json
+    // the “files” collection is special – it uses a manifest at /files/list.json
+    // The manifest should be an array of objects like:
+    // [ { "name": "foo.txt", "url": "/foo.txt" }, { "name": "image.png", "url": "/images/image.png" } ]
+    // You can generate this list manually or with a simple script when deploying.
+
     const collectionLinks = document.querySelectorAll('.collection-list a');
     const titleEl = document.getElementById('collection-title');
     const alertEl = document.getElementById('alert');
@@ -155,21 +160,22 @@
       loaderEl.style.display = 'none';
     }
 
-    // load static files list from JSON manifest at /files/list.json
-    // The manifest should be an array of objects like:
-    // [ { "name": "foo.txt", "url": "/foo.txt" }, { "name": "image.png", "url": "/images/image.png" } ]
-    // You can generate this list manually or with a simple script when deploying.
     async function loadFiles() {
+      hideAlert();
+      showLoader();
+      tableContainer.innerHTML = '';
+      titleEl.textContent = 'Files';
       try {
         const resp = await fetch('/files/list.json');
         if (!resp.ok) throw new Error('Failed to fetch file manifest');
         const list = await resp.json();
-        // expect list = [{ name: 'foo.txt', url: '/foo.txt' }, ...]
         const docs = list.map(item => ({ name: item.name, url: item.url }));
         renderTable(docs);
       } catch (e) {
         console.error(e);
         showAlert('Error loading file list: ' + e.message);
+      } finally {
+        hideLoader();
       }
     }
 
@@ -179,7 +185,6 @@
         return;
       }
 
-      // collect all keys
       const keys = new Set();
       docs.forEach(doc => {
         Object.keys(doc).forEach(k => keys.add(k));
@@ -234,7 +239,11 @@
         collectionLinks.forEach(l => l.classList.remove('active'));
         link.classList.add('active');
         const name = link.getAttribute('data-collection');
-        loadCollection(name);
+        if (name === 'files') {
+          loadFiles();
+        } else {
+          loadCollection(name);
+        }
       });
     });
   </script>
