@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload File — MM50I Admin</title>
+  <!-- reuse fonts/icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body { font-family:'Inter',sans-serif; background:#f5f5f5; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+    .card { background:white; padding:2rem; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.1); width:320px; }
+    .card h1 { margin-bottom:1rem; font-size:1.5rem; }
+    .form-group { margin-bottom:1rem; }
+    label { display:block; margin-bottom:.25rem; font-weight:600; }
+    input[type=file], input[type=text] { width:100%; }
+    button { width:100%; padding:.75rem; background:#667eea; color:white; border:none; border-radius:6px; font-size:1rem; cursor:pointer; }
+    .alert { display:none; margin-top:1rem; padding:.75rem; border-radius:6px; }
+    .alert.success { background:#d4edda; color:#155724; }
+    .alert.error { background:#f8d7da; color:#721c24; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1><i class="fas fa-upload"></i> Upload File</h1>
+    <div id="alert" class="alert"></div>
+    <form id="upload-form">
+      <div class="form-group">
+        <label for="file">Choose file *</label>
+        <input type="file" id="file" required />
+      </div>
+      <div class="form-group">
+        <label for="name">Display name</label>
+        <input type="text" id="name" placeholder="optional" />
+      </div>
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('upload-form');
+    const fileInput = document.getElementById('file');
+    const nameInput = document.getElementById('name');
+    const alertEl = document.getElementById('alert');
+    const outputEl = document.createElement('pre');
+    outputEl.style.whiteSpace = 'pre-wrap';
+    outputEl.style.marginTop = '1rem';
+
+    function showAlert(msg,type){ alertEl.textContent=msg; alertEl.className='alert '+type; alertEl.style.display='block'; }
+
+    form.addEventListener('submit', e=>{
+      e.preventDefault();
+      const file = fileInput.files[0];
+      if(!file){ showAlert('Please select a file.','error'); return; }
+      const displayName = nameInput.value.trim()||file.name;
+      const url = prompt('Enter the URL where the file will be hosted (e.g. /files/'+file.name+')');
+      if(!url){ showAlert('URL is required to generate manifest entry.','error'); return; }
+      const entry = { name: displayName, url };
+      outputEl.textContent = JSON.stringify(entry, null, 2);
+      form.appendChild(outputEl);
+      showAlert('Copy the JSON below and add it to /files/list.json manually.','success');
+    });
+  </script>
+</body>
+</html>

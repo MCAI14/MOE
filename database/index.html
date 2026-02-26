@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Database Explorer — MM50I Admin</title>
+
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: #2f3c4f;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 {
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+
+    .collection-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .collection-list li {
+      margin: 0.5rem 0;
+    }
+
+    .collection-list a {
+      color: #cbd5e0;
+      text-decoration: none;
+      display: block;
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+
+    .collection-list a.active,
+    .collection-list a:hover {
+      background: #3a4a5f;
+      color: white;
+    }
+
+    .content {
+      flex: 1;
+      padding: 1rem 2rem;
+      overflow-y: auto;
+    }
+
+    .content h2 {
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    table th,
+    table td {
+      text-align: left;
+      padding: 0.75rem;
+      border-bottom: 1px solid #ddd;
+      word-break: break-word;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .alert.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(0,0,0,0.1);
+      border-top: 3px solid #2f3c4f;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Collections</h2>
+    <ul class="collection-list">
+      <li><a href="#" data-collection="people">People</a></li>
+      <li><a href="#" data-collection="files">Files</a></li>
+      <li><a href="#" data-collection="cases">Cases</a></li>
+      <!-- add more as needed -->
+    </ul>
+  </div>
+
+  <div class="content">
+    <h2 id="collection-title">Select a collection</h2>
+    <div id="alert" class="alert error" style="display:none;"></div>
+    <div id="loader" style="display:none;"><span class="loader"></span>Loading...</div>
+    <div id="data-table"></div>
+  </div>
+
+
+  <script>
+    // static explorer: data stored in JSON files under /data/<collection>.json
+    const collectionLinks = document.querySelectorAll('.collection-list a');
+    const titleEl = document.getElementById('collection-title');
+    const alertEl = document.getElementById('alert');
+    const loaderEl = document.getElementById('loader');
+    const tableContainer = document.getElementById('data-table');
+
+    function showAlert(message) {
+      alertEl.textContent = message;
+      alertEl.style.display = 'block';
+    }
+
+    function hideAlert() {
+      alertEl.style.display = 'none';
+    }
+
+    function showLoader() {
+      loaderEl.style.display = 'inline-block';
+    }
+
+    function hideLoader() {
+      loaderEl.style.display = 'none';
+    }
+
+    // load static files list from JSON manifest at /files/list.json
+    // The manifest should be an array of objects like:
+    // [ { "name": "foo.txt", "url": "/foo.txt" }, { "name": "image.png", "url": "/images/image.png" } ]
+    // You can generate this list manually or with a simple script when deploying.
+    async function loadFiles() {
+      try {
+        const resp = await fetch('/files/list.json');
+        if (!resp.ok) throw new Error('Failed to fetch file manifest');
+        const list = await resp.json();
+        // expect list = [{ name: 'foo.txt', url: '/foo.txt' }, ...]
+        const docs = list.map(item => ({ name: item.name, url: item.url }));
+        renderTable(docs);
+      } catch (e) {
+        console.error(e);
+        showAlert('Error loading file list: ' + e.message);
+      }
+    }
+
+    function renderTable(docs) {
+      if (docs.length === 0) {
+        tableContainer.innerHTML = '<p>No documents found.</p>';
+        return;
+      }
+
+      // collect all keys
+      const keys = new Set();
+      docs.forEach(doc => {
+        Object.keys(doc).forEach(k => keys.add(k));
+      });
+      keys.add('id');
+
+      const header = Array.from(keys);
+      let html = '<table><thead><tr>';
+      header.forEach(h => { html += `<th>${h}</th>`; });
+      html += '</tr></thead><tbody>';
+
+      docs.forEach(doc => {
+        html += '<tr>';
+        header.forEach(h => {
+          let val = doc[h] !== undefined ? doc[h] : '';
+          if (h === 'id') val = doc.id;
+          if (h === 'url' && val) {
+            val = `<a href="${val}" target="_blank">${val}</a>`;
+          }
+          if (val && typeof val === 'object') val = JSON.stringify(val);
+          html += `<td>${val}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      tableContainer.innerHTML = html;
+    }
+
+    async function loadCollection(name) {
+      hideAlert();
+      showLoader();
+      tableContainer.innerHTML = '';
+      titleEl.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+
+      try {
+        const resp = await fetch(`/data/${name}.json`);
+        if (!resp.ok) throw new Error('Cannot fetch data');
+        const docs = await resp.json();
+        renderTable(docs);
+      } catch (err) {
+        console.error(err);
+        showAlert('Error loading collection: ' + err.message);
+      } finally {
+        hideLoader();
+      }
+    }
+
+    collectionLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        collectionLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        const name = link.getAttribute('data-collection');
+        loadCollection(name);
+      });
+    });
+  </script>
+</body>
+</html>
