@@ -160,17 +160,63 @@
       loaderEl.style.display = 'none';
     }
 
+    // GitHub configuration (private repo). Replace with your values or prompt user.
+    const GITHUB_OWNER = 'JeronymusAnonymus';
+    const GITHUB_REPO = 'moedtb';
+    const GITHUB_PATH = 'files';               // folder inside repo to list (adjust if needed)
+    let GITHUB_TOKEN = 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;                   // can be filled by prompt or query param
+
+    async function githubList(path) {
+      const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+      const headers = GITHUB_TOKEN ? { Authorization: `token ${GITHUB_TOKEN}` } : {};
+      const resp = await fetch(url, { headers });
+      if (!resp.ok) throw new Error(`GitHub API responded ${resp.status}`);
+      return resp.json();
+    }
+
+    async function fetchGitHubTree(path) {
+      const items = [];
+      const list = await githubList(path);
+      for (const entry of list) {
+        if (entry.type === 'dir') {
+          const children = await fetchGitHubTree(entry.path);
+          items.push({ name: entry.name, children });
+        } else if (entry.type === 'file') {
+          items.push({ name: entry.name, url: entry.download_url });
+        }
+      }
+      return items;
+    }
+
     async function loadFiles() {
       hideAlert();
       showLoader();
       tableContainer.innerHTML = '';
       titleEl.textContent = 'Files';
       try {
-        const resp = await fetch('/files/list.json');
-        if (!resp.ok) throw new Error('Failed to fetch file manifest');
-        const list = await resp.json();
-        const docs = list.map(item => ({ name: item.name, url: item.url }));
-        renderTable(docs);
+        // if GITHUB_TOKEN defined or user wants GitHub use that source
+        if (GITHUB_OWNER && GITHUB_REPO) {
+          if (!GITHUB_TOKEN) {
+            GITHUB_TOKEN = prompt('Enter GitHub personal access token (optional for public repo)');
+          }
+          const tree = await fetchGitHubTree(GITHUB_PATH);
+          if (tree.some(i => i.children)) {
+            tableContainer.appendChild(renderTree(tree));
+          } else {
+            const docs = tree.map(item => ({ name: item.name, url: item.url }));
+            renderTable(docs);
+          }
+        } else {
+          const resp = await fetch('/files/manifest.json');
+          if (!resp.ok) throw new Error('Failed to fetch file manifest');
+          const list = await resp.json();
+          if (list.some(i => i.children)) {
+            tableContainer.appendChild(renderTree(list));
+          } else {
+            const docs = list.map(item => ({ name: item.name, url: item.url }));
+            renderTable(docs);
+          }
+        }
       } catch (e) {
         console.error(e);
         showAlert('Error loading file list: ' + e.message);
@@ -202,7 +248,9 @@
           let val = doc[h] !== undefined ? doc[h] : '';
           if (h === 'id') val = doc.id;
           if (h === 'url' && val) {
-            val = `<a href="${val}" target="_blank">${val}</a>`;
+            const encoded = encodeURIComponent(val);
+            const encodedName = encodeURIComponent(doc.name || '');
+            val = `<a href="viewer.html?file=${encoded}&name=${encodedName}" target="_blank">view</a>`;
           }
           if (val && typeof val === 'object') val = JSON.stringify(val);
           html += `<td>${val}</td>`;
@@ -212,6 +260,30 @@
 
       html += '</tbody></table>';
       tableContainer.innerHTML = html;
+    }
+
+    // render a hierarchical tree (used for file manifest with folders)
+    function renderTree(items) {
+      const ul = document.createElement('ul');
+      items.forEach(item => {
+        const li = document.createElement('li');
+        if (item.children && Array.isArray(item.children)) {
+          li.textContent = item.name || '(folder)';
+          li.appendChild(renderTree(item.children));
+        } else {
+          const a = document.createElement('a');
+          a.textContent = item.name || item.url || 'file';
+          if (item.url) {
+            const encoded = encodeURIComponent(item.url);
+            const encodedName = encodeURIComponent(item.name || '');
+            a.href = `viewer.html?file=${encoded}&name=${encodedName}`;
+            a.target = '_blank';
+          }
+          li.appendChild(a);
+        }
+        ul.appendChild(li);
+      });
+      return ul;
     }
 
     async function loadCollection(name) {
