@@ -1,7 +1,7 @@
 // Netlify function to proxy GitHub contents API using secret token
 // Place this file under netlify/functions/ to be deployed automatically.
 
-const fetch = require('node-fetch');
+// Node 18+ provides a global fetch API in Netlify functions, so we don't need node-fetch.
 
 exports.handler = async function(event, context) {
   const owner = 'JeronymusAnonymus';
