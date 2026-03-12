@@ -132,23 +132,36 @@
   <script>
     const DEFAULT_PATH = ''; // root of the repo
     // Netlify functions are usually served from /.netlify/functions/, but some setups may use /netlify/functions/
-    const API_BASES = ['/.netlify/functions/github-files', '/netlify/functions/github-files'];
+    const API_BASES = [
+      '/.netlify/functions/github-files',
+      '/netlify/functions/github-files',
+      '/functions/github-files',
+      '/.netlify/functions/github-files.js',
+      '/netlify/functions/github-files.js'
+    ];
 
     async function fetchGitHubProxy(url) {
-      let lastError;
+      const attempts = [];
       for (const base of API_BASES) {
+        const endpoint = `${base}?path=${encodeURIComponent(url)}`;
         try {
-          const resp = await fetch(`${base}?path=${encodeURIComponent(url)}`);
+          const resp = await fetch(endpoint);
+          attempts.push({ endpoint, status: resp.status, ok: resp.ok });
           if (!resp.ok) {
             const body = await resp.text().catch(() => '');
+            // If it's a 404 HTML page, it will show in the error message.
             throw new Error(`GitHub proxy error ${resp.status}: ${body}`);
           }
           return resp;
         } catch (err) {
-          lastError = err;
+          attempts.push({ endpoint, error: err.message });
         }
       }
-      throw lastError;
+
+      const details = attempts
+        .map(a => (a.error ? `${a.endpoint} => ${a.error}` : `${a.endpoint} => ${a.status}`))
+        .join('\n');
+      throw new Error(`All endpoints failed:\n${details}`);
     }
 
     function getParam(name) {
