@@ -146,12 +146,20 @@
         const endpoint = `${base}?path=${encodeURIComponent(url)}`;
         try {
           const resp = await fetch(endpoint);
-          attempts.push({ endpoint, status: resp.status, ok: resp.ok });
+          const contentType = resp.headers.get('content-type') || '';
+          attempts.push({ endpoint, status: resp.status, ok: resp.ok, contentType });
+
+          // If the endpoint returns something other than JSON, it's not the function we want.
+          if (!contentType.includes('application/json')) {
+            const body = await resp.text().catch(() => '');
+            throw new Error(`Not JSON response (${contentType}): ${body.slice(0, 200)}`);
+          }
+
           if (!resp.ok) {
             const body = await resp.text().catch(() => '');
-            // If it's a 404 HTML page, it will show in the error message.
             throw new Error(`GitHub proxy error ${resp.status}: ${body}`);
           }
+
           return resp;
         } catch (err) {
           attempts.push({ endpoint, error: err.message });
