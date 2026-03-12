@@ -16,7 +16,10 @@
   <a href="index.html" class="back">← Back to explorer</a>
   <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
     <h1 id="filename" style="margin:0;">Loading...</h1>
-    <div id="file-actions" style="font-size:0.9rem;"></div>
+    <div style="text-align:right;">
+      <div id="file-meta" style="font-size:0.85rem; color:#555; margin-bottom:0.25rem;"></div>
+      <div id="file-actions" style="font-size:0.9rem;"></div>
+    </div>
   </div>
   <div id="content">
     <div id="viewer">
@@ -38,6 +41,26 @@
       const viewer = document.getElementById('viewer');
       const filedata = document.getElementById('filedata');
       const actions = document.getElementById('file-actions');
+      const meta = document.getElementById('file-meta');
+
+      function formatBytes(bytes) {
+        if (!bytes || bytes <= 0) return 'n/a';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let idx = 0;
+        let value = bytes;
+        while (value >= 1024 && idx < units.length - 1) {
+          value /= 1024;
+          idx += 1;
+        }
+        return `${value.toFixed(1)} ${units[idx]}`;
+      }
+
+      function setMeta(contentType, size) {
+        const parts = [];
+        if (contentType) parts.push(`Type: <strong>${contentType}</strong>`);
+        if (size != null && !isNaN(size)) parts.push(`Size: <strong>${formatBytes(size)}</strong>`);
+        meta.innerHTML = parts.length ? parts.join(' • ') : '';
+      }
 
       function setActions(url) {
         actions.innerHTML = `<a href="${url}" target="_blank" rel="noopener" style="color:#667eea;">Open raw</a> | <a href="${url}" download style="color:#667eea;">Download</a>`;
@@ -57,6 +80,16 @@
         viewer.innerHTML = `<img src="${url}" style="max-width:100%; height:auto; border-radius:8px;" />`;
       }
 
+      function showAudio(blob) {
+        const url = URL.createObjectURL(blob);
+        viewer.innerHTML = `<audio controls style="width:100%;"><source src="${url}"></audio>`;
+      }
+
+      function showVideo(blob) {
+        const url = URL.createObjectURL(blob);
+        viewer.innerHTML = `<video controls style="width:100%; max-height:80vh;"><source src="${url}"></video>`;
+      }
+
       function showPDF(blob) {
         const url = URL.createObjectURL(blob);
         viewer.innerHTML = `<iframe src="${url}" style="width:100%; height:80vh; border:none;"></iframe>`;
@@ -68,13 +101,42 @@
           .then(r => {
             if (!r.ok) throw new Error('HTTP ' + r.status);
             const contentType = r.headers.get('content-type') || '';
+            const lengthHeader = r.headers.get('content-length');
+            const size = lengthHeader ? parseInt(lengthHeader, 10) : null;
+            setMeta(contentType, size);
+
             if (contentType.startsWith('image/')) {
-              return r.blob().then(showImage);
+              return r.blob().then(blob => {
+                setMeta(contentType, blob.size); // prefer actual blob size
+                showImage(blob);
+              });
             }
+
+            if (contentType.startsWith('audio/')) {
+              return r.blob().then(blob => {
+                setMeta(contentType, blob.size);
+                showAudio(blob);
+              });
+            }
+
+            if (contentType.startsWith('video/')) {
+              return r.blob().then(blob => {
+                setMeta(contentType, blob.size);
+                showVideo(blob);
+              });
+            }
+
             if (contentType === 'application/pdf') {
-              return r.blob().then(showPDF);
+              return r.blob().then(blob => {
+                setMeta(contentType, blob.size);
+                showPDF(blob);
+              });
             }
-            return r.text().then(showText);
+
+            return r.text().then(text => {
+              setMeta(contentType, new TextEncoder().encode(text).length);
+              showText(text);
+            });
           })
           .catch(e => {
             showError('Error loading file: ' + e.message);
