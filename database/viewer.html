@@ -37,6 +37,11 @@
 
       const viewer = document.getElementById('viewer');
       const filedata = document.getElementById('filedata');
+      const actions = document.getElementById('file-actions');
+
+      function setActions(url) {
+        actions.innerHTML = `<a href="${url}" target="_blank" rel="noopener" style="color:#667eea;">Open raw</a> | <a href="${url}" download style="color:#667eea;">Download</a>`;
+      }
 
       function showError(message) {
         viewer.innerHTML = `<p style="color: #b00;">${message}</p>`;
@@ -58,6 +63,7 @@
       }
 
       if (fileUrl) {
+        setActions(fileUrl);
         fetch(fileUrl)
           .then(r => {
             if (!r.ok) throw new Error('HTTP ' + r.status);
