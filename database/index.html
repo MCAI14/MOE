@@ -160,33 +160,9 @@
       loaderEl.style.display = 'none';
     }
 
-    // GitHub configuration (private repo). Replace with your values or prompt user.
-    const GITHUB_OWNER = 'JeronymusAnonymus';
-    const GITHUB_REPO = 'moedtb';
-    const GITHUB_PATH = 'files';               // folder inside repo to list (adjust if needed)
-    let GITHUB_TOKEN = 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;                   // can be filled by prompt or query param
+    // If Netlify is used, GitHub requests will be proxied through a serverless function.
+    // no token or repo constants needed in client-side code
 
-    async function githubList(path) {
-      const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
-      const headers = GITHUB_TOKEN ? { Authorization: `token ${GITHUB_TOKEN}` } : {};
-      const resp = await fetch(url, { headers });
-      if (!resp.ok) throw new Error(`GitHub API responded ${resp.status}`);
-      return resp.json();
-    }
-
-    async function fetchGitHubTree(path) {
-      const items = [];
-      const list = await githubList(path);
-      for (const entry of list) {
-        if (entry.type === 'dir') {
-          const children = await fetchGitHubTree(entry.path);
-          items.push({ name: entry.name, children });
-        } else if (entry.type === 'file') {
-          items.push({ name: entry.name, url: entry.download_url });
-        }
-      }
-      return items;
-    }
 
     async function loadFiles() {
       hideAlert();
@@ -194,28 +170,15 @@
       tableContainer.innerHTML = '';
       titleEl.textContent = 'Files';
       try {
-        // if GITHUB_TOKEN defined or user wants GitHub use that source
-        if (GITHUB_OWNER && GITHUB_REPO) {
-          if (!GITHUB_TOKEN) {
-            GITHUB_TOKEN = prompt('Enter GitHub personal access token (optional for public repo)');
-          }
-          const tree = await fetchGitHubTree(GITHUB_PATH);
-          if (tree.some(i => i.children)) {
-            tableContainer.appendChild(renderTree(tree));
-          } else {
-            const docs = tree.map(item => ({ name: item.name, url: item.url }));
-            renderTable(docs);
-          }
+        // call Netlify function which reads repo using server-side token
+        const resp = await fetch('/.netlify/functions/github-files?path=files');
+        if (!resp.ok) throw new Error('Failed to fetch GitHub proxy');
+        const list = await resp.json();
+        if (list.some(i => i.children)) {
+          tableContainer.appendChild(renderTree(list));
         } else {
-          const resp = await fetch('/files/manifest.json');
-          if (!resp.ok) throw new Error('Failed to fetch file manifest');
-          const list = await resp.json();
-          if (list.some(i => i.children)) {
-            tableContainer.appendChild(renderTree(list));
-          } else {
-            const docs = list.map(item => ({ name: item.name, url: item.url }));
-            renderTable(docs);
-          }
+          const docs = list.map(item => ({ name: item.name, url: item.url }));
+          renderTable(docs);
         }
       } catch (e) {
         console.error(e);
