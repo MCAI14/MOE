@@ -6,8 +6,10 @@ const fetch = require('node-fetch');
 exports.handler = async function(event, context) {
   const owner = 'JeronymusAnonymus';
   const repo = 'moedtb';
-  // optional path parameter, default to 'files'
-  const path = event.queryStringParameters && event.queryStringParameters.path ? event.queryStringParameters.path : 'files';
+  // optional path parameter, default to repo root
+  const path = (event.queryStringParameters && typeof event.queryStringParameters.path === 'string')
+    ? event.queryStringParameters.path
+    : '';
   const token = process.env.GITHUB_TOKEN; // set in Netlify site settings
 
   if (!token) {

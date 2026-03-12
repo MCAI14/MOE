@@ -113,17 +113,16 @@
 </head>
 <body>
   <div class="sidebar">
-    <h2>Collections</h2>
+    <h2>Explorer</h2>
     <ul class="collection-list">
-      <li><a href="#" data-collection="people">People</a></li>
-      <li><a href="#" data-collection="files">Files</a></li>
-      <li><a href="#" data-collection="cases">Cases</a></li>
-      <!-- add more as needed -->
+      <li><a href="#" data-action="root">Home</a></li>
+      <li><a href="#" data-action="refresh">Refresh</a></li>
     </ul>
   </div>
 
   <div class="content">
-    <h2 id="collection-title">Select a collection</h2>
+    <h2 id="collection-title">Loading…</h2>
+    <div id="breadcrumbs" style="margin: 0.5rem 0 1rem; color: #555; font-size: 0.9rem;"></div>
     <div id="alert" class="alert error" style="display:none;"></div>
     <div id="loader" style="display:none;"><span class="loader"></span>Loading...</div>
     <div id="data-table"></div>
@@ -131,160 +130,144 @@
 
   <script src="auth.js"></script>
   <script>
-    // static explorer: data stored in JSON files under /data/<collection>.json
-    // the “files” collection is special – it uses a manifest at /files/list.json
-    // The manifest should be an array of objects like:
-    // [ { "name": "foo.txt", "url": "/foo.txt" }, { "name": "image.png", "url": "/images/image.png" } ]
-    // You can generate this list manually or with a simple script when deploying.
+    const DEFAULT_PATH = ''; // root of the repo
+    const API_BASE = '/.netlify/functions/github-files';
+
+    function getParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
 
     async function init() {
-      const collectionLinks = document.querySelectorAll('.collection-list a');
       const titleEl = document.getElementById('collection-title');
+      const breadcrumbEl = document.getElementById('breadcrumbs');
       const alertEl = document.getElementById('alert');
       const loaderEl = document.getElementById('loader');
       const tableContainer = document.getElementById('data-table');
 
-    function showAlert(message) {
-      alertEl.textContent = message;
-      alertEl.style.display = 'block';
-    }
+      const rootLink = document.querySelector('[data-action="root"]');
+      const refreshLink = document.querySelector('[data-action="refresh"]');
 
-    function hideAlert() {
-      alertEl.style.display = 'none';
-    }
+      let currentPath = getParam('path') || DEFAULT_PATH;
 
-    function showLoader() {
-      loaderEl.style.display = 'inline-block';
-    }
-
-    function hideLoader() {
-      loaderEl.style.display = 'none';
-    }
-
-    // If Netlify is used, GitHub requests will be proxied through a serverless function.
-    // no token or repo constants needed in client-side code
-
-
-    async function loadFiles() {
-      hideAlert();
-      showLoader();
-      tableContainer.innerHTML = '';
-      titleEl.textContent = 'Files';
-      try {
-        // call Netlify function which reads repo using server-side token
-        const resp = await fetch('/.netlify/functions/github-files?path=files');
-        if (!resp.ok) throw new Error('Failed to fetch GitHub proxy');
-        const list = await resp.json();
-        if (list.some(i => i.children)) {
-          tableContainer.appendChild(renderTree(list));
-        } else {
-          const docs = list.map(item => ({ name: item.name, url: item.url }));
-          renderTable(docs);
-        }
-      } catch (e) {
-        console.error(e);
-        showAlert('Error loading file list: ' + e.message);
-      } finally {
-        hideLoader();
-      }
-    }
-
-    function renderTable(docs) {
-      if (docs.length === 0) {
-        tableContainer.innerHTML = '<p>No documents found.</p>';
-        return;
-      }
-
-      const keys = new Set();
-      docs.forEach(doc => {
-        Object.keys(doc).forEach(k => keys.add(k));
-      });
-      keys.add('id');
-
-      const header = Array.from(keys);
-      let html = '<table><thead><tr>';
-      header.forEach(h => { html += `<th>${h}</th>`; });
-      html += '</tr></thead><tbody>';
-
-      docs.forEach(doc => {
-        html += '<tr>';
-        header.forEach(h => {
-          let val = doc[h] !== undefined ? doc[h] : '';
-          if (h === 'id') val = doc.id;
-          if (h === 'url' && val) {
-            const encoded = encodeURIComponent(val);
-            const encodedName = encodeURIComponent(doc.name || '');
-            val = `<a href="viewer.html?file=${encoded}&name=${encodedName}" target="_blank">view</a>`;
-          }
-          if (val && typeof val === 'object') val = JSON.stringify(val);
-          html += `<td>${val}</td>`;
-        });
-        html += '</tr>';
-      });
-
-      html += '</tbody></table>';
-      tableContainer.innerHTML = html;
-    }
-
-    // render a hierarchical tree (used for file manifest with folders)
-    function renderTree(items) {
-      const ul = document.createElement('ul');
-      items.forEach(item => {
-        const li = document.createElement('li');
-        if (item.children && Array.isArray(item.children)) {
-          li.textContent = item.name || '(folder)';
-          li.appendChild(renderTree(item.children));
-        } else {
-          const a = document.createElement('a');
-          a.textContent = item.name || item.url || 'file';
-          if (item.url) {
-            const encoded = encodeURIComponent(item.url);
-            const encodedName = encodeURIComponent(item.name || '');
-            a.href = `viewer.html?file=${encoded}&name=${encodedName}`;
-            a.target = '_blank';
-          }
-          li.appendChild(a);
-        }
-        ul.appendChild(li);
-      });
-      return ul;
-    }
-
-    async function loadCollection(name) {
-      hideAlert();
-      showLoader();
-      tableContainer.innerHTML = '';
-      titleEl.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-
-      try {
-        const resp = await fetch(`/data/${name}.json`);
-        if (!resp.ok) throw new Error('Cannot fetch data');
-        const docs = await resp.json();
-        renderTable(docs);
-      } catch (err) {
-        console.error(err);
-        showAlert('Error loading collection: ' + err.message);
-      } finally {
-        hideLoader();
-      }
-    }
-
-    collectionLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
+      rootLink.addEventListener('click', (e) => {
         e.preventDefault();
-        collectionLinks.forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-        const name = link.getAttribute('data-collection');
-        if (name === 'files') {
-          loadFiles();
-        } else {
-          loadCollection(name);
-        }
+        loadPath(DEFAULT_PATH);
       });
-    });
-  }
 
-  requireDatabaseAuth().then(init).catch(console.error);
+      refreshLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadPath(currentPath);
+      });
+
+      function showAlert(message) {
+        alertEl.textContent = message;
+        alertEl.style.display = 'block';
+      }
+
+      function hideAlert() {
+        alertEl.style.display = 'none';
+      }
+
+      function showLoader() {
+        loaderEl.style.display = 'inline-block';
+      }
+
+      function hideLoader() {
+        loaderEl.style.display = 'none';
+      }
+
+      function makeBreadcrumbs(path) {
+        const parts = path ? path.split('/').filter(Boolean) : [];
+        if (parts.length === 0) {
+          breadcrumbEl.textContent = 'Root';
+          return;
+        }
+
+        const fragments = [];
+        let accum = '';
+        fragments.push(`<a href="#" data-path="">Root</a>`);
+        for (const part of parts) {
+          accum = accum ? `${accum}/${part}` : part;
+          fragments.push(`<a href="#" data-path="${accum}">${part}</a>`);
+        }
+
+        breadcrumbEl.innerHTML = fragments.join(' / ');
+        breadcrumbEl.querySelectorAll('a').forEach(a => {
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const p = a.getAttribute('data-path');
+            loadPath(p);
+          });
+        });
+      }
+
+      function renderTable(items, basePath) {
+        if (!items || items.length === 0) {
+          tableContainer.innerHTML = '<p>No items found.</p>';
+          return;
+        }
+
+        let html = '<table><thead><tr><th>Name</th><th>Type</th><th>Action</th></tr></thead><tbody>';
+
+        items.forEach(item => {
+          const isDir = Array.isArray(item.children);
+          const name = item.name || '(unknown)';
+          const type = isDir ? 'folder' : 'file';
+
+          html += '<tr>';
+          html += `<td>${name}</td>`;
+          html += `<td>${type}</td>`;
+
+          if (isDir) {
+            const nextPath = basePath ? `${basePath}/${name}` : name;
+            html += `<td><a href="#" data-path="${nextPath}">open</a></td>`;
+          } else {
+            const encoded = encodeURIComponent(item.url);
+            const encodedName = encodeURIComponent(name);
+            html += `<td><a href="viewer.html?file=${encoded}&name=${encodedName}" target="_blank">view</a></td>`;
+          }
+
+          html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        tableContainer.innerHTML = html;
+
+        // attach folder click handlers
+        tableContainer.querySelectorAll('a[data-path]').forEach(a => {
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadPath(a.getAttribute('data-path'));
+          });
+        });
+      }
+
+      async function loadPath(path) {
+        hideAlert();
+        showLoader();
+        tableContainer.innerHTML = '';
+        titleEl.textContent = path || 'Root';
+        makeBreadcrumbs(path);
+        currentPath = path;
+
+        try {
+          const resp = await fetch(`${API_BASE}?path=${encodeURIComponent(path)}`);
+          if (!resp.ok) throw new Error('Failed to fetch GitHub proxy');
+          const list = await resp.json();
+          renderTable(list, path);
+        } catch (e) {
+          console.error(e);
+          showAlert('Error loading data: ' + e.message);
+        } finally {
+          hideLoader();
+        }
+      }
+
+      loadPath(currentPath);
+    }
+
+    requireDatabaseAuth().then(init).catch(console.error);
   </script>
 </body>
 </html>
