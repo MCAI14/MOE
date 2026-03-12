@@ -131,7 +131,25 @@
   <script src="auth.js"></script>
   <script>
     const DEFAULT_PATH = ''; // root of the repo
-    const API_BASE = '/.netlify/functions/github-files';
+    // Netlify functions are usually served from /.netlify/functions/, but some setups may use /netlify/functions/
+    const API_BASES = ['/.netlify/functions/github-files', '/netlify/functions/github-files'];
+
+    async function fetchGitHubProxy(url) {
+      let lastError;
+      for (const base of API_BASES) {
+        try {
+          const resp = await fetch(`${base}?path=${encodeURIComponent(url)}`);
+          if (!resp.ok) {
+            const body = await resp.text().catch(() => '');
+            throw new Error(`GitHub proxy error ${resp.status}: ${body}`);
+          }
+          return resp;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+      throw lastError;
+    }
 
     function getParam(name) {
       const params = new URLSearchParams(window.location.search);
@@ -252,13 +270,9 @@
         currentPath = path;
 
         try {
-          const resp = await fetch(`${API_BASE}?path=${encodeURIComponent(path)}`);
-          if (!resp.ok) {
-            const body = await resp.text().catch(() => '');
-            throw new Error(`GitHub proxy error ${resp.status}: ${body}`);
-          }
-          const list = await resp.json();
-          renderTable(list, path);
+          const resp = await fetchGitHubProxy(path);
+        const list = await resp.json();
+        renderTable(list, path);
         } catch (e) {
           console.error(e);
           showAlert('Error loading data: ' + e.message);
