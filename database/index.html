@@ -253,7 +253,10 @@
 
         try {
           const resp = await fetch(`${API_BASE}?path=${encodeURIComponent(path)}`);
-          if (!resp.ok) throw new Error('Failed to fetch GitHub proxy');
+          if (!resp.ok) {
+            const body = await resp.text().catch(() => '');
+            throw new Error(`GitHub proxy error ${resp.status}: ${body}`);
+          }
           const list = await resp.json();
           renderTable(list, path);
         } catch (e) {
