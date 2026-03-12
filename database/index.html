@@ -130,51 +130,25 @@
 
   <script src="auth.js"></script>
   <script>
+    const LIST_PATH = '/database/github-file-list.json';
     const DEFAULT_PATH = ''; // root of the repo
-    // Netlify functions are usually served from /.netlify/functions/, but some setups may use /netlify/functions/
-    const API_BASES = [
-      '/.netlify/functions/github-files',
-      '/netlify/functions/github-files',
-      '/functions/github-files',
-      '/.netlify/functions/github-files.js',
-      '/netlify/functions/github-files.js'
-    ];
-
-    async function fetchGitHubProxy(url) {
-      const attempts = [];
-      for (const base of API_BASES) {
-        const endpoint = `${base}?path=${encodeURIComponent(url)}`;
-        try {
-          const resp = await fetch(endpoint);
-          const contentType = resp.headers.get('content-type') || '';
-          attempts.push({ endpoint, status: resp.status, ok: resp.ok, contentType });
-
-          // If the endpoint returns something other than JSON, it's not the function we want.
-          if (!contentType.includes('application/json')) {
-            const body = await resp.text().catch(() => '');
-            throw new Error(`Not JSON response (${contentType}): ${body.slice(0, 200)}`);
-          }
-
-          if (!resp.ok) {
-            const body = await resp.text().catch(() => '');
-            throw new Error(`GitHub proxy error ${resp.status}: ${body}`);
-          }
-
-          return resp;
-        } catch (err) {
-          attempts.push({ endpoint, error: err.message });
-        }
-      }
-
-      const details = attempts
-        .map(a => (a.error ? `${a.endpoint} => ${a.error}` : `${a.endpoint} => ${a.status}`))
-        .join('\n');
-      throw new Error(`All endpoints failed:\n${details}`);
-    }
 
     function getParam(name) {
       const params = new URLSearchParams(window.location.search);
       return params.get(name);
+    }
+
+    async function loadList() {
+      const resp = await fetch(LIST_PATH);
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        throw new Error(`Failed to load list (${resp.status}): ${body}`);
+      }
+      const list = await resp.json();
+      if (!Array.isArray(list)) {
+        throw new Error('Generated list is not an array');
+      }
+      return list;
     }
 
     async function init() {
@@ -291,9 +265,8 @@
         currentPath = path;
 
         try {
-          const resp = await fetchGitHubProxy(path);
-        const list = await resp.json();
-        renderTable(list, path);
+          const list = await loadList();
+          renderTable(list, path);
         } catch (e) {
           console.error(e);
           showAlert('Error loading data: ' + e.message);

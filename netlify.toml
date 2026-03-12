@@ -1,0 +1,11 @@
+# Netlify config for the MOE site
+# Builds a static JSON representation of the private repo during deploy,
+# then serves it directly from the generated file.
+
+[build]
+  command = "node scripts/generate-github-file-list.js"
+  publish = "."
+
+[build.environment]
+  # Ensure your GitHub token is set in Netlify (Site settings → Build & deploy → Environment)
+  # GITHUB_TOKEN = "..."
