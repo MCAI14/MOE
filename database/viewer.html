@@ -10,6 +10,7 @@
     pre { background:#f0f0f0; padding:1rem; border-radius:6px; overflow:auto; }
     a.back { display:inline-block; margin-bottom:1rem; color:#667eea; text-decoration:none; }
   </style>
+  <script src="auth.js"></script>
 </head>
 <body>
   <a href="index.html" class="back">← Back to explorer</a>
@@ -19,30 +20,34 @@
   </div>
 
   <script>
-    function getParam(name) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
+    async function init() {
+      function getParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+      }
+
+      const fileUrl = getParam('file');
+      const name = getParam('name') || fileUrl;
+      document.getElementById('filename').textContent = name;
+
+      if (fileUrl) {
+        fetch(fileUrl)
+          .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(text => {
+            document.getElementById('filedata').textContent = text;
+          })
+          .catch(e => {
+            document.getElementById('filedata').textContent = 'Error loading file: ' + e.message;
+          });
+      } else {
+        document.getElementById('filedata').textContent = 'No file specified.';
+      }
     }
 
-    const fileUrl = getParam('file');
-    const name = getParam('name') || fileUrl;
-    document.getElementById('filename').textContent = name;
-
-    if (fileUrl) {
-      fetch(fileUrl)
-        .then(r => {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.text();
-        })
-        .then(text => {
-          document.getElementById('filedata').textContent = text;
-        })
-        .catch(e => {
-          document.getElementById('filedata').textContent = 'Error loading file: ' + e.message;
-        });
-    } else {
-      document.getElementById('filedata').textContent = 'No file specified.';
-    }
+    requireDatabaseAuth().then(init).catch(console.error);
   </script>
 </body>
 </html>

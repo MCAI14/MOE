@@ -365,9 +365,11 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+  <script src="../auth.js"></script>
 
   <script>
-    // Firebase Configuration
+    async function init() {
+      // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyA6F4G0yVFWNEaynsfDBM9qVbPWqc0bzrM",
       authDomain: "pixelcloudarchive.firebaseapp.com",
@@ -517,6 +519,9 @@
       dateInput.value = now.toISOString().slice(0, 16);
       updatePreview();
     });
+  }
+
+  requireDatabaseAuth().then(init).catch(console.error);
   </script>
 </body>
 </html>

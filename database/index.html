@@ -129,7 +129,7 @@
     <div id="data-table"></div>
   </div>
 
-
+  <script src="auth.js"></script>
   <script>
     // static explorer: data stored in JSON files under /data/<collection>.json
     // the “files” collection is special – it uses a manifest at /files/list.json
@@ -137,11 +137,12 @@
     // [ { "name": "foo.txt", "url": "/foo.txt" }, { "name": "image.png", "url": "/images/image.png" } ]
     // You can generate this list manually or with a simple script when deploying.
 
-    const collectionLinks = document.querySelectorAll('.collection-list a');
-    const titleEl = document.getElementById('collection-title');
-    const alertEl = document.getElementById('alert');
-    const loaderEl = document.getElementById('loader');
-    const tableContainer = document.getElementById('data-table');
+    async function init() {
+      const collectionLinks = document.querySelectorAll('.collection-list a');
+      const titleEl = document.getElementById('collection-title');
+      const alertEl = document.getElementById('alert');
+      const loaderEl = document.getElementById('loader');
+      const tableContainer = document.getElementById('data-table');
 
     function showAlert(message) {
       alertEl.textContent = message;
@@ -281,6 +282,9 @@
         }
       });
     });
+  }
+
+  requireDatabaseAuth().then(init).catch(console.error);
   </script>
 </body>
 </html>
