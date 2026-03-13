@@ -151,6 +151,18 @@
       return list;
     }
 
+    function getItemsForPath(tree, path) {
+      if (!path) return tree;
+      const parts = path.split('/').filter(Boolean);
+      let current = tree;
+      for (const part of parts) {
+        const item = current.find(i => i.name === part && Array.isArray(i.children));
+        if (!item) return [];
+        current = item.children;
+      }
+      return current;
+    }
+
     async function init() {
       const titleEl = document.getElementById('collection-title');
       const breadcrumbEl = document.getElementById('breadcrumbs');
@@ -266,7 +278,8 @@
 
         try {
           const list = await loadList();
-          renderTable(list, path);
+          const items = getItemsForPath(list, path);
+          renderTable(items, path);
         } catch (e) {
           console.error(e);
           showAlert('Error loading data: ' + e.message);
