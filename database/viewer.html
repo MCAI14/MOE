@@ -71,9 +71,31 @@
         viewer.innerHTML = `<p style="color: #b00;">${message}</p>`;
       }
 
+      function getFileExtension(name) {
+        if (!name) return '';
+        const idx = name.lastIndexOf('.');
+        return idx !== -1 ? name.slice(idx + 1).toLowerCase() : '';
+      }
+
       function showText(text) {
         filedata.textContent = text;
         filedata.style.display = 'block';
+      }
+
+      function showUrlRedirect(text) {
+        let targetUrl = '';
+        const urlMatch = text.match(/^(?:URL|url)\s*=\s*(.+)$/im);
+        if (urlMatch) targetUrl = urlMatch[1].trim();
+
+        if (!targetUrl) {
+          showError('Invalid .url file: URL not found.');
+          return;
+        }
+
+        viewer.innerHTML = `<p>Redirecting to <a href="${targetUrl}" target="_blank" rel="noopener">${targetUrl}</a>...</p>`;
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 800);
       }
 
       function showImage(blob) {
@@ -89,6 +111,16 @@
       function showVideo(blob) {
         const url = URL.createObjectURL(blob);
         viewer.innerHTML = `<video controls style="width:100%; max-height:80vh;"><source src="${url}"></video>`;
+      }
+
+      function showPDF(blob) {
+        const url = URL.createObjectURL(blob);
+        viewer.innerHTML = `<iframe src="${url}" style="width:100%; height:80vh; border:none;"></iframe>`;
+      }
+
+      function showDocument(url) {
+        const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+        viewer.innerHTML = `<iframe src="${officeUrl}" style="width:100%; height:80vh; border:none;"></iframe>`;
       }
 
       function showHTML(text) {
@@ -128,6 +160,21 @@
               });
             }
 
+            const extension = getFileExtension(name);
+
+            if (extension === 'url') {
+              return r.text().then(text => {
+                setMeta(contentType, new TextEncoder().encode(text).length);
+                showUrlRedirect(text);
+              });
+            }
+
+            if (extension === 'docx') {
+              // Most browsers cannot render docx directly. Use Office online viewer if publicly accessible.
+              showDocument(decodedFileUrl);
+              return;
+            }
+
             if (contentType === 'application/pdf') {
               return r.blob().then(blob => {
                 setMeta(contentType, blob.size);
@@ -135,7 +182,7 @@
               });
             }
 
-            if (contentType === 'text/html') {
+            if (contentType === 'text/html' || extension === 'html' || extension === 'htm') {
               return r.text().then(text => {
                 setMeta(contentType, new TextEncoder().encode(text).length);
                 showHTML(text);
