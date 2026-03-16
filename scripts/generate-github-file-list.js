@@ -19,6 +19,7 @@ const owner = process.env.GITHUB_OWNER || 'JeronymusAnonymus';
 const repo = process.env.GITHUB_REPO || 'moedtb';
 const token = process.env.GITHUB_TOKEN;
 const outPath = path.resolve(process.cwd(), 'database', 'github-file-list.json');
+const outFilesDir = path.resolve(process.cwd(), 'database', 'files');
 
 if (!token) {
   console.error('GITHUB_TOKEN is not set. Set it as an environment variable (e.g., in Netlify).');
@@ -54,7 +55,26 @@ async function fetchDir(subpath = '') {
       const children = await fetchDir(entry.path);
       out.push({ name: entry.name, children });
     } else if (entry.type === 'file') {
-      out.push({ name: entry.name, url: entry.download_url });
+      // Download the file content locally so viewer can access it without GitHub token
+      const localPath = path.join(outFilesDir, entry.path);
+      await fs.promises.mkdir(path.dirname(localPath), { recursive: true });
+
+      const fileResp = await fetch(entry.download_url, {
+        headers: {
+          Authorization: `token ${token}`,
+          'User-Agent': 'netlify-build',
+          Accept: 'application/vnd.github.v3.raw',
+        },
+      });
+      if (!fileResp.ok) {
+        throw new Error(`Failed to fetch file ${entry.path}: ${fileResp.status} ${fileResp.statusText}`);
+      }
+
+      const data = Buffer.from(await fileResp.arrayBuffer());
+      await fs.promises.writeFile(localPath, data);
+
+      const publicUrl = `/database/files/${entry.path}`;
+      out.push({ name: entry.name, url: publicUrl, source: entry.download_url });
     }
   }
   return out;
